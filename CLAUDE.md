@@ -16,7 +16,7 @@ Firmware sous EspHome + liaison HomeAssistant.
 | --- | --- | --- |
 | Jauge gauche | % utilisé de la session | `five_hour` (5 h glissantes) |
 | Jauge droite | % utilisé de la semaine | `seven_day` |
-| Afficheur 7 seg | heure de reset de la session (`HH:MM`) | `five_hour.resets_at` |
+| Afficheur 7 seg | heure de reset de la session (`HH.MM`) ou temps restant (`-H.MM`), au choix depuis HA | `five_hour.resets_at` |
 | Témoin CLAUDE | agent au travail (ambre qui respire), agent qui attend une réponse (rouge qui clignote, prioritaire) | `binary_sensor.claude_actif`, `binary_sensor.claude_needattention` |
 
 ## Principes directeurs (non négociables)
@@ -47,7 +47,7 @@ WSL2 : hooks Claude Code + Hermes ──► lecture de l'endpoint d'usage OAuth 
                                       ▼
             ESP32 sous ESPHome ── capteurs visibles dans Home Assistant
               ├─ PWM (ledc) ──► 2 voltmètres (pleine échelle vers 3 V)
-              ├─ TM1637 ──────► 7 seg HH:MM (heure de reset de la session)
+              ├─ TM1637 ──────► 7 seg (heure de reset de la session ou temps restant)
               └─ WS2812B ─────► témoin CLAUDE (activité des agents)
 ```
 

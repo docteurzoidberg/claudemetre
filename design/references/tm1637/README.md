@@ -1,19 +1,20 @@
 # Afficheur TM1637 0,56" : modèle 3D de référence
 
-Module en stock : afficheur 4 chiffres 0,56" à deux-points, piloté par un
-TM1637, **segments jaunes** (AliExpress 1005001970566474).
+Module en stock : afficheur 4 chiffres 0,56" à points décimaux (un point entre
+chaque chiffre, pas de deux-points), piloté par un TM1637, **segments jaunes**
+(AliExpress 1005001970566474).
 
 Source : `Display_4-Didi_LED_TM1637.stp`, téléchargé sur GrabCAD (CATIA V5,
 AP214, mm, 2020). Sa description d'origine, en tchèque, dit « Hodinový LED
-displej 0.56" TM1637 - zelený » (afficheur d'horloge 0,56", vert) : seule la
-couleur diffère de notre module : le modèle Fusion et les rendus passent les
-segments en jaune.
+displej 0.56" TM1637 - zelený » (afficheur d'horloge 0,56", vert). Il diffère de
+notre module par sa couleur, que le modèle Fusion et les rendus passent en jaune,
+et par son deux-points, absent de notre module.
 
 | Fichier | Contenu |
 | --- | --- |
 | `Display_4-Didi_LED_TM1637.stp` | modèle STEP complet (PCB, afficheur, TM1637, composants, connecteur) |
 | `step_to_segments.py` | extrait les segments du STEP : `uv run step_to_segments.py` |
-| `tm1637_segments.json` | contour exact des 28 segments, des 4 points et du deux-points |
+| `tm1637_segments.json` | contour exact des 28 segments, des 4 points et du deux-points du modèle |
 
 ## C'est bien le 0,56"
 

@@ -5,7 +5,7 @@
 - Instrument de bord, pour la planche murale en bois du PC : coque kaki,
   platine noire, cadrans sombres, plaquettes noires à texte blanc.
 - Deux **jauges analogiques à aiguille** (voltmètres de tableau détournés).
-- Un **afficheur 7 segments** pour l'heure de reset de la session.
+- Un **afficheur 7 segments** pour l'heure de reset de la session ou le temps restant.
 - Un **témoin lumineux CLAUDE** (légende éclairée) pour l'activité des agents :
   ambre qui respire au travail, rouge qui clignote quand l'un d'eux attend une
   réponse.
@@ -28,7 +28,7 @@
 | Carte ESP32-S3-DevKitC-1 N16R8 (diymore) | 1 | Amazon B0F3XMYYQY |
 | Carte à borniers MRD076A | 1 | l'ESP32 s'enfiche dessus, câblage vissé sans soudure ; Amazon B0FKBLR2KF ; cotes : `design/references/mrd076a/README.md` |
 | Voltmètre analogique 0-5 V « SO-45 » | 2 | ramené à ~3 V pleine échelle par une résistance interne (voir plus bas) |
-| Module 7 seg 4 chiffres 0,56" avec deux-points (TM1637), jaune | 1 | AliExpress 1005001970566474 ; cotes : `design/references/tm1637/README.md` |
+| Module 7 seg 4 chiffres 0,56" à points décimaux (TM1637), jaune | 1 | AliExpress 1005001970566474 ; cotes : `design/references/tm1637/README.md` |
 | Témoin CLAUDE : tronçon de ruban WS2812B à 144 LED/m (4 LED), diode 1N400x, 2 FHC M3×8, 2 inserts M3 | 1 | pièces imprimées par le générateur, voir [temoin.md](temoin.md) |
 | Câble / alim USB 5 V | 1 | |
 
@@ -62,11 +62,13 @@ Rien d'autre si possible : ni potentiomètre d'ajustage, ni carte de filtrage.
 
 ### Afficheur 7 segments
 
-- **TM1637 4 chiffres avec deux-points** : 2 fils (CLK, DIO), alimenté en 3,3 V,
+- **TM1637 4 chiffres à points décimaux** (un point entre chaque chiffre, pas de
+  deux-points) : 2 fils (CLK, DIO), alimenté en 3,3 V,
   luminosité réglable, composant `tm1637` natif d'ESPHome. Ce n'est pas un vrai
   I²C (pas d'adresse, protocole propre) : deux GPIO quelconques, sans partage
   avec un bus I²C.
-- Affiche **l'heure de reset de la session** (`14:32`), pas un compte à rebours.
+- Affiche **l'heure de reset de la session** (`14.32`) ou **le temps restant avant
+  ce reset** (`-2.07`), au choix depuis HA.
 - Module 0,56" à segments jaunes, PCB de 66 × 27,2 mm, 4 trous M3 (Ø 3,3) à
   l'entraxe 60 × 21,5. Fils sur un pin header coudé, tourné vers l'intérieur de
   l'afficheur : le PCB passe à 0,9 mm du SO-45 de droite.
@@ -174,6 +176,7 @@ Rien d'autre si possible : ni potentiomètre d'ajustage, ni carte de filtrage.
 | Claude attend une réponse (`claude_needattention`) | binary_sensor | — |
 | Calibration jauges | number × 5 par jauge | % PWM |
 | Luminosité afficheur | number | 0-7 |
+| Mode afficheur | select | Heure de reset, Temps restant |
 | Luminosité voyant | number | % |
 
 Fenêtre absente = valeur inconnue, ce n'est **pas** 0 %.
@@ -181,14 +184,17 @@ Fenêtre absente = valeur inconnue, ce n'est **pas** 0 %.
 ### Comportement de l'appareil
 
 - Heure : `time: homeassistant`, fuseau `Europe/Paris`.
-- Démarrage : aiguilles à 100 % puis à 0 %, afficheur à `88:88`, voyant ambre puis
-  rouge, puis `--:--` jusqu'aux premières données.
+- Démarrage : aiguilles à 100 % puis à 0 %, afficheur à `88.88`, voyant ambre puis
+  rouge, puis `--.--` jusqu'aux premières données.
 - Aiguilles qui glissent vers la nouvelle valeur (pleine échelle en ≈ 2,5 s), pour
   un rendu mécanique.
 - Usage inconnu : aiguille au repos.
-- Heure de reset passée : aiguille à 0 sans attendre le PC, et `--:--` sur
+- Heure de reset passée : aiguille à 0 sans attendre le PC, et `--.--` sur
   l'afficheur pour la session.
-- Deux-points qui clignote quand une heure est affichée.
+- Point entre le 2e et le 3e chiffre, qui clignote quand une heure ou un temps
+  restant est affiché.
+- Temps restant : `-H.MM`, arrondi à la minute supérieure (`-0.01` jusqu'au reset,
+  jamais `-0.00`). Le mode choisi survit à un redémarrage.
 
 ## 4. Questions ouvertes
 
@@ -199,8 +205,13 @@ Fenêtre absente = valeur inconnue, ce n'est **pas** 0 %.
       reçue avant d'imprimer `plaque_bossage`.
 - [ ] Schéma de câblage (`design/cablage/index.html`) à reprendre pour la carte à
       borniers : il décrit encore des fils soudés sur J1.
-- [ ] Carte Lovelace à recaler sur l'objet : voyant (cadre 52 × 18, fenêtre 32 × 11)
-      et forme des cadrans (`card_assets.py`, puis redéploiement dans HA).
+- [ ] Carte Lovelace à recaler sur l'objet : voyant (cadre 52 × 18, fenêtre 32 × 11),
+      forme des cadrans et afficheur, qui a un point et non un deux-points
+      (`card_assets.py`, puis redéploiement dans HA).
+- [ ] Afficheur modélisé avec le deux-points du STEP (design Fusion, rendus Blender,
+      maquette 3D) : le module de l'objet n'a que des points.
+- [ ] Carte Lovelace : elle montre toujours l'heure de reset, sans suivre le mode de
+      l'afficheur de l'objet.
 - [ ] Comportement sur l'objet en cas de données périmées ou de WiFi perdu : rien
       n'est signalé pour l'instant (la carte Lovelace atténue l'afficheur).
 - [ ] Mode nuit (luminosité du 7 seg selon l'heure, pilotable depuis HA) ?

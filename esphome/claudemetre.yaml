@@ -1,7 +1,8 @@
 # Claudemètre : firmware ESPHome.
 # Lit les capteurs claude_* de Home Assistant (homeassistant/packages/claudemetre.yaml)
-# et les montre sur deux voltmètres SO-45 (PWM), un TM1637 (HH:MM du reset de
-# la session) et le voyant CLAUDE (ruban WS2812B, paquet temoin.yaml).
+# et les montre sur deux voltmètres SO-45 (PWM), un TM1637 (heure de reset de
+# la session ou temps restant, au choix depuis HA) et le voyant CLAUDE (ruban
+# WS2812B, paquet temoin.yaml).
 # Spécification : docs/cahier-des-charges.md § 3 ; détail : docs/logiciel.md.
 #
 # Carte : diymore ESP32-S3-DevKitC-1 N16R8 (16 Mo de flash ; PSRAM octale
@@ -223,6 +224,19 @@ number:
     optimistic: true
     restore_value: true
 
+select:
+  - platform: template
+    id: display_mode
+    name: Afficheur mode
+    icon: mdi:clock-outline
+    entity_category: config
+    options:
+      - Heure de reset
+      - Temps restant
+    initial_option: Heure de reset
+    optimistic: true
+    restore_value: true
+
 interval:
   - interval: 20ms
     then:
@@ -265,8 +279,9 @@ interval:
           glide(id(week_duty), target(id(week_forced), id(week_used).state, id(week_resets_at).state, week_cal),
                 id(week_pwm));
 
-# HH:MM du reset de la session, deux-points qui clignote ; --:-- si l'heure
-# est inconnue ou passée. Le point du 2e chiffre allume le deux-points.
+# Reset de la session, selon display_mode : heure (HH.MM) ou temps restant
+# (-H.MM, 5 h au plus). Point du 2e chiffre qui clignote ; --.-- si
+# l'heure est inconnue ou passée.
 display:
   - platform: tm1637
     id: tm_display
@@ -286,14 +301,18 @@ display:
         it.print("--.--");
         return;
       }
-      if (millis() % 1000 < 500)
-        it.strftime("%H.%M", ESPTime::from_epoch_local(reset));
-      else
-        it.strftime("%H%M", ESPTime::from_epoch_local(reset));
+      const bool dot = millis() % 1000 < 500;
+      if (id(display_mode).current_option() == "Temps restant") {
+        // Arrondi à la minute supérieure : -0.01 jusqu'au reset, jamais -0.00.
+        const int minutes = (reset - now.timestamp + 59) / 60;
+        it.printf(dot ? "-%d.%02d" : "-%d%02d", minutes / 60, minutes % 60);
+      } else {
+        it.strftime(dot ? "%H.%M" : "%H%M", ESPTime::from_epoch_local(reset));
+      }
 
 script:
-  # Démarrage : aiguilles 0 → 100 → 0 %, afficheur 88:88, voyant ambre puis
-  # rouge ; ensuite tout suit Home Assistant (--:-- jusqu'aux premières données).
+  # Démarrage : aiguilles 0 → 100 → 0 %, afficheur 88.88, voyant ambre puis
+  # rouge ; ensuite tout suit Home Assistant (--.-- jusqu'aux premières données).
   - id: boot_test
     then:
       - lambda: |-

@@ -86,8 +86,8 @@ HA est arrêté.
   déclenchement réessaiera.
 - Réponse 200 : normalisation au schéma de la statusline (`utilization` →
   `used_percentage`, `resets_at` ISO → epoch en secondes, **arrondi à la seconde la plus
-  proche** : tronqué, `14:29:59.997` donnerait `14:29` sur l'afficheur au lieu de
-  `14:30`). `resets_at: null` = fenêtre pas commencée, donc 0 % sans heure de reset
+  proche** : tronqué, `14:29:59.997` donnerait `14.29` sur l'afficheur au lieu de
+  `14.30`). `resets_at: null` = fenêtre pas commencée, donc 0 % sans heure de reset
   (connu, à la différence d'une fenêtre absente).
 - Envoi à HA à chaque mesure réussie (au plus une toutes les 2 min). HA injoignable :
   rien n'est gardé, le déclenchement suivant remesure et renvoie.
@@ -125,7 +125,7 @@ partent en un appel, l'état est restauré au redémarrage de HA, et les entité
   (`text_sensor: platform: homeassistant`) : un `sensor` ESPHome est un float 32 bits, qui
   ne garde un epoch qu'à 128 s près.
 - Quand `resets_at` est dépassé sans nouveau déclenchement, c'est l'appareil qui passe à
-  0 % / `--:--` (cahier des charges § 3) ; HA se corrige à la mesure suivante.
+  0 % / `--.--` (cahier des charges § 3) ; HA se corrige à la mesure suivante.
 
 ### Entités d'usage
 
@@ -137,8 +137,8 @@ partent en un appel, l'état est restauré au redémarrage de HA, et les entité
 | `sensor.claude_reset_semaine` | timestamp (+ attribut `epoch`) | `seven_day.resets_at` |
 | `sensor.claude_derniere_mesure` | timestamp | `measured_at` |
 
-Les `number` de calibration et de luminosité sont des entités de l'appareil ESPHome, pas
-de ce package.
+Les `number` de calibration et de luminosité et le `select` du mode de l'afficheur sont des
+entités de l'appareil ESPHome, pas de ce package.
 
 ## Activité de Claude
 
@@ -248,7 +248,9 @@ peut resservir aux témoins du générateur. L'appareil répond à `claudemetre.
   attributs `epoch` (convertis en entier dans la lambda d'affichage) ;
   `time: platform: homeassistant` pour l'heure locale.
 - Lecture seule des états : pas besoin d'autoriser l'appareil à appeler des actions HA.
-- Lambda d'affichage TM1637 (`HH:MM` en heure locale, `--:--` si inconnu ou dépassé) ; le
+- Lambda d'affichage TM1637 (`--.--` si inconnu ou dépassé) ; selon le `select`
+  `Afficheur mode` : `Heure de reset` (`HH.MM` en heure locale) ou `Temps restant` (`-H.MM`,
+  arrondi à la minute supérieure), décompté par l'ESP32 sans le PC ; le
   reste en composants natifs.
 - Jauges étalonnées en 5 points depuis HA : changer un point amène la jauge dessus pendant
   20 s, pour le régler à l'œil.
@@ -272,12 +274,12 @@ YAML seulement**, sans éditeur visuel.
   imprimés et les plaquettes de Fusion (`so45_print.py`, `plaquettes_texte.py`) : pas de
   `@font-face`, mal pris en charge dans le Shadow DOM. Les tracés sont produits par
   `card_assets.py`, qui réécrit le bloc `ASSETS` du JS.
-- Propres à la carte (absents de l'objet) : **aiguilles rouges** et **valeur en % sous les
-  plaquettes** SESSION et SEMAINE, atténuée avec l'afficheur quand les données sont périmées.
+- Propres à la carte (absents de l'objet) : **deux-points** de l'afficheur (l'objet n'a qu'un
+  point), **aiguilles rouges** et **valeur en % sous les plaquettes** SESSION et SEMAINE, atténuée avec l'afficheur quand les données sont périmées.
   Couleurs réglables par variables CSS (`--cm-needle`, `--cm-value`, `--cm-seg-on`,
   `--cm-kaki`…).
 - Mêmes règles que l'appareil : aiguille qui glisse vers la valeur (transition CSS lente) ;
-  deux-points qui clignote quand une heure est affichée ; reset dépassé → 0 % et `--:--` sans
+  séparateur qui clignote quand une heure est affichée ; reset dépassé → 0 % et `--:--` sans
   attendre HA (minuterie de 30 s), pour la session comme pour la semaine (d'où `week_reset`) ;
   capteur inconnu → aiguille au repos et `--:--`. Données périmées (`dernière mesure` trop
   ancienne ou inconnue) → afficheur atténué.
