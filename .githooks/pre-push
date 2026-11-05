@@ -1,0 +1,20 @@
+#!/bin/sh
+# Refuse de pousser des docs françaises dont la version anglaise n'a pas suivi.
+# Un hook ne lance pas la traduction : un commit créé ici ne partirait pas avec ce push.
+# Passer outre (correction sans effet sur l'anglais) : git push --no-verify
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+retard=
+while read -r _ local _ _; do
+  case $local in *[!0]*) ;; *) continue ;; esac  # que des zéros : suppression d'une branche
+  retard="$retard$(.githooks/docs-en-retard "$local" </dev/null)
+"
+done
+
+retard=$(printf '%s' "$retard" | sed '/^$/d' | sort -u)
+[ -n "$retard" ] || exit 0
+
+echo "Push refusé : docs françaises en avance sur leur version anglaise." >&2
+printf '%s\n' "$retard" | awk '{ print "  " $1 " -> " $2 }' >&2
+echo "Lancer /regenerer-docs-en et commiter. Passer outre : git push --no-verify" >&2
+exit 1

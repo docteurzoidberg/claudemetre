@@ -1,0 +1,20 @@
+#!/bin/sh
+# Docs françaises en avance sur leur version anglaise, d'après les commits pas encore poussés.
+# Une ligne par doc : « doc_fr doc_en dernier_commit_de_la_doc_en ». Rien si tout suit.
+# Usage : .githooks/docs-en-retard [commit]   (HEAD par défaut)
+# Une doc qui s'ajoute dans docs/ s'ajoute aussi à la liste ci-dessous.
+ref=${1:-HEAD}
+
+while read -r fr en; do
+  base=$(git log -1 --format=%H "$ref" -- "$en")
+  plage=${base:+$base..}$ref
+  n=$(git rev-list --count "$plage" --not --remotes -- "$fr")
+  [ "$n" -eq 0 ] || printf '%s %s %s\n' "$fr" "$en" "${base:--}"
+done <<LISTE
+README.md docs/en/README.md
+docs/cahier-des-charges.md docs/en/specification.md
+docs/logiciel.md docs/en/software.md
+docs/maquettes.md docs/en/mockup.md
+docs/source-donnees.md docs/en/data-source.md
+docs/temoin.md docs/en/indicator.md
+LISTE

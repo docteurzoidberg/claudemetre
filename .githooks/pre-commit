@@ -1,0 +1,44 @@
+#!/bin/sh
+# Refuse un commit qui ajoute un lien d'artefact ou une valeur propre au poste : ils ne vont que
+# dans ARTEFACTS.md et prive.env, hors dépôt (CLAUDE.md). Seules les lignes ajoutées des fichiers
+# texte sont lues, et le rapport ne cite pas les valeurs. Passer outre : git commit --no-verify
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+ajouts=$(mktemp)
+trouve=$(mktemp)
+trap 'rm -f "$ajouts" "$trouve"' EXIT
+
+# Lignes ajoutées, sous la forme « fichier:ligne<tab>texte »
+git -c core.quotePath=false diff --cached -U0 --no-color --no-ext-diff --diff-filter=ACMR | awk '
+  /^diff --git /       { entete = 1; next }
+  entete && /^\+\+\+ / { f = substr($0, 7); sub(/\t$/, "", f); next }
+  /^@@ /               { entete = 0; split($3, a, ","); n = substr(a[1], 2) + 0; next }
+  !entete && /^\+/     { print f ":" n "\t" substr($0, 2); n++ }
+' >"$ajouts"
+
+signale() {  # $1 : ce qui est en cause, $2 : texte cherché
+  [ "${#2}" -ge 6 ] || return 0
+  grep -aF -- "$2" "$ajouts" | cut -f1 | sed "s|\$|  $1|" >>"$trouve"
+}
+
+grep -aE 'claude\.ai/(code/)?artifact/[A-Za-z0-9]' "$ajouts" | cut -f1 | sed "s/\$/  lien d'artefact/" >>"$trouve"
+
+if [ -f prive.env ]; then
+  . ./prive.env
+  for nom in $(sed -n 's/^\([A-Za-z_][A-Za-z0-9_]*\)=.*/\1/p' prive.env); do
+    eval "valeur=\${$nom}"
+    # Une valeur identique à celle du modèle n'a rien de privé (HA_SAMBA_USER, BLENDER)
+    modele=$(. ./prive.exemple.env; eval "printf %s \"\${$nom-}\"")
+    [ "$valeur" = "$modele" ] || signale "$nom de prive.env" "$valeur"
+  done
+  # Ce que les valeurs entières ne couvrent pas : autres adresses du réseau, autres dossiers
+  signale "adresse du réseau local" "${LAN%.*}."
+  signale "dossier utilisateur Windows" "${WIN_TEMP%%/AppData*}"
+  signale "dossier personnel" "$HOME"
+fi
+
+[ -s "$trouve" ] || exit 0
+echo "Commit refusé : à garder hors dépôt (ARTEFACTS.md, prive.env)." >&2
+sort -u "$trouve" | sed 's/^/  /' >&2
+echo "Passer outre : git commit --no-verify" >&2
+exit 1
