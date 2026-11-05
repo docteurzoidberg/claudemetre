@@ -348,8 +348,8 @@ chromium-browser --headless=new --virtual-time-budget=45000 --dump-dom \
 ### Déployer la carte
 
 Dans HA : le fichier va dans `<config>/www/claudemetre/claudemetre-card.js`, déclaré comme
-ressource `/local/claudemetre/claudemetre-card.js` de type module (Paramètres > Tableaux de bord
-> Ressources, en mode avancé). Ajouter `?v=N` à l'URL de la ressource à chaque mise à jour pour
+ressource `/local/claudemetre/claudemetre-card.js` de type module (Paramètres > Tableaux de bord >
+Ressources, en mode avancé). Ajouter `?v=N` à l'URL de la ressource à chaque mise à jour pour
 contourner le cache du navigateur.
 
 La config de HA est accessible par le partage Samba (`HA_SAMBA` et `HA_SAMBA_USER` de

@@ -1,6 +1,6 @@
-# Claudemètre
+[English version](docs/en/README.md)
 
-> English speakers: the docs and YAML comments are in French for now.
+# Claudemètre
 
 Un instrument de bord mural qui affiche l'usage de mon forfait Claude sur de vraies aiguilles : deux
 voltmètres analogiques, un afficheur 7 segments et un témoin lumineux, pilotés en WiFi par un ESP32 sous
@@ -125,7 +125,7 @@ sur le trait imprimé.
 | `host/` | scripts lancés par les hooks, et leurs tests |
 | `maquette/` | page 3D assemblée et éclatée |
 | `design/` | fichiers d'impression, scripts Fusion et Blender, rendus, cadrans, plaquettes, modèles tiers |
-| `docs/` | cahier des charges, partie logicielle, source des données, témoin, maquettes |
+| `docs/` | cahier des charges, partie logicielle, source des données, témoin, maquettes ; version anglaise dans `docs/en/` |
 
 ## Limites
 

@@ -77,6 +77,7 @@ homeassistant/  package HA (packages/claudemetre.yaml), carte Lovelace (www/clau
 maquette/   page 3D assemblé / éclaté (three.js, sans build) et son modèle claudometre.glb
             (`uv run pack.py`), publiée sur GitHub Pages : voir maquette/README.md
 docs/       cahier des charges, notes techniques
+  en/       version anglaise du README et des docs : reporter chaque modification du français
 design/     maquettes et gabarits
   references/grabcad.md            pages GrabCAD des modèles tiers de references/
   references/so45/                 modèle 3D du voltmètre SO-45 (STEP, F3D) + cotes (README),
