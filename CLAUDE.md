@@ -96,7 +96,7 @@ design/     maquettes et gabarits
                                    `visiere_3mf.py`, `plaques_3mf.py`, `clips_3mf.py`)
   cablage/index.html               schéma de câblage (artifact privé, republier sur la même URL)
   temoin/                          preset du témoin CLAUDE (claude.json) et export/ du générateur
-                                   (skill `temoin-lumineux`, docs/temoin.md)
+                                   (docs/temoin.md)
   blender/                         scène de la maquette `jj_fusion` (cm_lib.py, variants6.py)
   blender/render.sh <variante> [preview|final]   rendu via Blender 5.2 Windows
   blender/anim.sh <variante> [preview|final]     vidéo du voyant (MP4 dans renders/)
@@ -112,9 +112,7 @@ design/     maquettes et gabarits
 - Échanges et documentation en **français** ; identifiants de code en anglais.
 - Firmware : **ESPHome**, avec le framework **ESP-IDF**
   (`esp32: framework: type: esp-idf`), pas Arduino. Lambdas C++ seulement
-  là où les composants natifs ne suffisent pas. Valider et compiler avec le
-  skill global `esphome` (venv `~/esphome`, script `esph.sh`) ; téléverser
-  seulement sur demande.
+  là où les composants natifs ne suffisent pas.
 - Secrets (WiFi, clé API ESPHome, jeton Home Assistant) dans `secrets.yaml`
   hors du dépôt.
 - Matériel : carte **diymore ESP32-S3-DevKitC-1 N16R8** (Amazon
@@ -129,18 +127,13 @@ design/     maquettes et gabarits
 - Visserie M3 selon le stock : FHC à partir de M3×12 seulement,
   CHC en 6, 8, 10, 12, 16 et plus. Détail dans
   [docs/cahier-des-charges.md](docs/cahier-des-charges.md).
-- Fusion : charger le skill `fusion360` avant d'utiliser le serveur MCP.
 - **Maquette 3D** (`maquette/`) : `.github/workflows/pages.yml` la publie sur GitHub Pages à chaque
   push sur `main` qui la touche, sans la régénérer. Si le design a changé, la mettre à jour **juste
   avant de pousser sur la remote** (`maquette/README.md`), pas pendant le développement.
-- Témoins lumineux : pour refaire le témoin CLAUDE ou en créer d'autres,
-  toujours passer par le skill `temoin-lumineux` (commande `temoin`). Le
-  preset `design/temoin/<nom>.json` est la seule source : on le modifie, on
-  contrôle, on régénère ; jamais de retouche des fichiers de
-  `design/temoin/export/` ni de témoin dessiné à la main dans Fusion.
-- **Artefacts** : `ARTEFACTS.md`, à la racine et hors dépôt (`.gitignore`), liste
-  les pages privées claude.ai du projet et leur source. On les garde toutes, et
-  leurs liens ne vont que là, jamais dans un fichier suivi par Git.
+- Témoins lumineux : le preset `design/temoin/<nom>.json` est la seule
+  source : on le modifie, on contrôle, on régénère ; jamais de retouche des
+  fichiers de `design/temoin/export/` ni de témoin dessiné à la main dans
+  Fusion.
 - **Données locales** : `prive.env`, à la racine et hors dépôt (`.gitignore`), regroupe
   les chemins et adresses propres au poste : Home Assistant, LAN, `%TEMP%` de Windows,
   dépôt vu de Windows, Blender, projet Fusion. Modèle : `prive.exemple.env`. Les docs et les scripts y renvoient (`. ./prive.env`

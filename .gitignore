@@ -29,3 +29,6 @@ prive.env
 
 # Kit de présentation pour le Discord ESPHome : reste en local
 esphome-discord/
+
+# Plans en cours : restent en local tant qu'ils ne sont pas intégrés
+PLAN-*.md
