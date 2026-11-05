@@ -57,6 +57,6 @@ Cotes et interfaces : `design/fusion/README.md`. Témoin : [temoin.md](temoin.md
 ## Page 3D assemblé / éclaté (`maquette/`)
 
 Le modèle avec toutes les pièces internes (carte, clips, inserts, visserie), dans une page
-three.js à manipuler : ouverture de l'éclaté, quatre vues, voyant au rythme du firmware, pièces à masquer,
-fiche de chaque pièce au survol. Publiée sur GitHub Pages par une action, et à mettre à jour juste avant de
+three.js à manipuler : choix de la plaque et de ses connecteurs (pleine, LP-16, LP-16 et fusible), ouverture de
+l'éclaté, quatre vues, voyant au rythme du firmware, pièces à masquer, fiche de chaque pièce au survol. Publiée sur GitHub Pages par une action, et à mettre à jour juste avant de
 pousser : procédure dans `maquette/README.md`.

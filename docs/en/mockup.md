@@ -59,6 +59,6 @@ Dimensions and interfaces: `design/fusion/README.md`. Indicator: [indicator.md](
 ## Assembled / exploded 3D page (`maquette/`)
 
 The model with all the internal parts (board, clips, inserts, screws), in a
-three.js page to play with: exploded view slider, four views, indicator at the firmware's pace, parts to hide,
-a card for each part on hover. Published to GitHub Pages by an action, and to be updated just before
+three.js page to play with: choice of the plate and its connectors (blank, LP-16, LP-16 and fuse), exploded view
+slider, four views, indicator at the firmware's pace, parts to hide, a card for each part on hover. Published to GitHub Pages by an action, and to be updated just before
 pushing: procedure in `maquette/README.md`.

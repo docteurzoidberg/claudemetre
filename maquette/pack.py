@@ -21,6 +21,7 @@ HERE = Path(__file__).resolve().parent
 SRC = HERE.parent / "design" / "fusion" / "web"
 OUT = HERE / "claudometre.glb"
 AXE = np.array((0.866, 0.0, 0.5))              # axe du LP-16, 30° vers le haut et l'extérieur
+AXE_FUSIBLE = np.array((0.7071, 0.0, 0.7071))  # axes du LP-16 et du fusible sur plaque_bossage_fusible, 45°
 FLANC = 45.0
 
 
@@ -28,8 +29,8 @@ def y(v):
     return (0.0, float(v), 0.0)
 
 
-def lp16(d):
-    return tuple(float(a) for a in np.array((FLANC, 0, 0)) + AXE * d)
+def lp16(d, axe=AXE):
+    return tuple(float(a) for a in np.array((FLANC, 0, 0)) + axe * d)
 
 
 # pièce : (déplacement à l'éclaté, groupe de la liste, visserie ?, arêtes dessinées ?)
@@ -65,6 +66,21 @@ PIECES = {
     "lp16": (lp16(28), "connecteur", False, True),
     "vis_lp16": (lp16(46), "connecteur", True, False),
     "fiche": (lp16(64), "connecteur", False, False),
+    "plaque_flanc_droite": ((FLANC, 0.0, 0.0), "plaques", False, True),
+    "plaque_fusible": ((FLANC, 0.0, 0.0), "plaques", False, True),
+    "inserts_fusible": ((FLANC, 0.0, 0.0), "connecteur", True, False),
+    "lp16_fusible": (lp16(28, AXE_FUSIBLE), "connecteur", False, True),
+    "vis_lp16_fusible": (lp16(46, AXE_FUSIBLE), "connecteur", True, False),
+    "fiche_fusible": (lp16(64, AXE_FUSIBLE), "connecteur", False, False),
+    "porte_fusible": (lp16(48, AXE_FUSIBLE), "fusible", False, False),
+}
+
+# Plaque du flanc droit au choix dans la page : chaque pièce ci-dessous n'existe qu'avec sa plaque.
+OPTIONS = {
+    "plaque_flanc_droite": "pleine",
+    **dict.fromkeys(("plaque_bossage", "inserts_bossage", "lp16", "vis_lp16", "fiche"), "lp16"),
+    **dict.fromkeys(("plaque_fusible", "inserts_fusible", "lp16_fusible", "vis_lp16_fusible", "fiche_fusible",
+                     "porte_fusible"), "fusible"),
 }
 
 # matériau : (couleur sRGB, rugosité, métal)
@@ -115,9 +131,9 @@ def centre(c):
 def visserie(c, sous):
     x, _, _ = centre(c)
     if sous.startswith("insert"):
-        return ("inserts_bossage" if x > 100 else "inserts_coque" if abs(x) >= 85 else "inserts_platine"), "laiton"
+        return ("inserts_coque" if abs(x) >= 85 else "inserts_platine"), "laiton"
     if sous.startswith("vis_FHC"):
-        return ("vis_lp16" if x > 100 else "vis_platine" if abs(x) >= 85 else "vis_plaquettes"), "oxyde"
+        return ("vis_platine" if abs(x) >= 85 else "vis_plaquettes"), "oxyde"
     if sous.startswith("vis_CHC_M3x12"):
         return "vis_so45", "oxyde"
     if abs(x) < 90:
@@ -148,6 +164,23 @@ def carte(c, chemin):
     return "abs"
 
 
+def plaque(c, top, sous):
+    """Pièce et matériau d'un corps d'une plaque à connecteur : tout est dans le composant de la plaque."""
+    f = top == "plaque_bossage_fusible"
+    if not sous:
+        return ("plaque_fusible" if f else "plaque_bossage"), "kaki"
+    if sous.startswith("connecteur_LP-16"):
+        return ("lp16_fusible" if f else "lp16"), "lp16"
+    if sous.startswith("insert"):
+        return ("inserts_fusible" if f else "inserts_bossage"), "laiton"
+    if sous.startswith("vis_FHC"):
+        return ("vis_lp16_fusible" if f else "vis_lp16"), "oxyde"
+    if sous == "porte_fusible_5x20":
+        return "porte_fusible", {"Body1": "acier", "Body2": "acier", "Body3": "acier", "Body4": "laiton",
+                                 "Body6": "laiton"}.get(c["body"], "abs")
+    raise KeyError(c["occ"])
+
+
 def classe(c):
     """Pièce et matériau d'un corps, None pour le laisser de côté."""
     chemin = c["occ"].split("+")
@@ -174,18 +207,16 @@ def classe(c):
         return "coque", "kaki"
     if top == "visiere":
         return "visiere", "kaki"
-    if top == "plaque_bossage":
-        return "plaque_bossage", "kaki"
+    if top in ("plaque_bossage", "plaque_bossage_fusible"):
+        return plaque(c, top, sous)
     if top == "plaque_flanc":
-        return "plaque_flanc", "noir"
+        return ("plaque_flanc_droite" if chemin[0].endswith(":1") else "plaque_flanc"), "noir"
     if top == "platine":
         return "platine", "noir"
     if top.startswith("clip_"):
         return "clips", "noir"
     if top == "voltmetre_SO-45":
         return "so45", "abs" if c["app"] == "ABS (Black)" else "acier"
-    if top == "connecteur_LP-16_2poles":
-        return "lp16", "lp16"
     if top.startswith("plaquette_"):
         return "plaquettes", "noir_pla" if c["app"] == "PLA noir" else "blanc"
     if top == "visserie":
@@ -305,6 +336,34 @@ class Glb:
         return a
 
 
+def fiche_a_45(groupes):
+    """La fiche et le câble viennent de Blender, sur le LP-16 de plaque_bossage : même pose relative sur l'autre plaque."""
+    poses = index("claudometre")["poses"]
+
+    def pose(debut):
+        m = np.array(next(v for k, v in poses.items() if k.startswith(debut + "+connecteur_LP-16")), float).reshape(4, 4)
+        m[:3, 3] *= 10                         # cm en mm
+        return m
+
+    m = pose("plaque_bossage_fusible:1") @ np.linalg.inv(pose("plaque_bossage:1"))
+    r, t = m[:3, :3], m[:3, 3]
+    k = r[0, 2] / r[2, 2]                      # la rotation penche la partie qui pend : on la remet d'aplomb
+    for (piece, mat), morceaux in list(groupes.items()):
+        if piece != "fiche":
+            continue
+        sortie = []
+        for p, n, tri in morceaux:
+            p, n = p @ r.T + t, n @ r.T
+            if mat == "cable":
+                x0, z0 = p[p[:, 2].argmax(), [0, 2]]     # haut du câble : il redescend après
+                pend = p[:, 0] > x0
+                p[pend, 0] += k * (z0 - p[pend, 2])
+                n[pend, 2] += k * n[pend, 0]
+                n /= np.linalg.norm(n, axis=1, keepdims=True)
+            sortie.append((p.astype("<f4"), n.astype("<f4"), tri))
+        groupes[("fiche_fusible", mat)] = sortie
+
+
 def main():
     tout = list(charge("claudometre")) + list(charge("extras"))
     segments([c for c, *_ in tout])
@@ -314,6 +373,7 @@ def main():
         if cle is None:
             continue
         groupes.setdefault(cle, []).append((p, n, t))
+    fiche_a_45(groupes)
 
     glb = Glb()
     noms = sorted({m for _, m in groupes})
@@ -344,7 +404,8 @@ def main():
         if not enfants:
             raise SystemExit(f"pièce vide : {piece}")
         nodes.append({"name": piece, "children": enfants,
-                      "extras": {"offset": list(offset), "groupe": groupe, "vis": vis, "aretes": aretes}})
+                      "extras": {"offset": list(offset), "groupe": groupe, "vis": vis, "aretes": aretes,
+                                 "option": OPTIONS.get(piece)}})
         nodes[0]["children"].append(len(nodes) - 1)
 
     doc = {"asset": {"version": "2.0", "generator": "maquette/pack.py",

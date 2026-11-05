@@ -16,10 +16,33 @@ const GROUPES = {
   cadrans: ["Cadrans", "Imprimés en multi-filament : « % · 5 H » pour la session, « % · 7 J » pour la semaine."],
   plaquettes: ["Plaquettes", "PLA noir, texte PLA blanc, 40 × 8 × 1,8 mm, 6 FHC M3×12."],
   visiere: ["Visière", "PETG kaki, collée dans une rainure."],
-  plaques: ["Flancs", "plaque_bossage à droite, plaque pleine à gauche, 86 × 32 × 4 mm, 8 CHC M3×6."],
-  connecteur: ["Connecteur", "LP-16 2 pôles incliné de 30°, 4 FHC M3×12. Fiche et câble sont ajoutés pour le rendu."],
+  plaques: ["Flancs", ""],
+  connecteur: ["Connecteur", ""],
+  fusible: ["Fusible", "Porte-fusible 5 × 20 à capuchon, qui protège l'arrivée 12 V. L'écrou se loge dans une empreinte de la plaque."],
 };
 const VISSERIE = ["Visserie", "36 vis M3 et 34 inserts laiton."];
+
+// Plaque du flanc droit, au choix : chacune vient avec ses connecteurs. `sans` : groupes absents de cette plaque.
+const CONNECTEUR = "4 FHC M3×12. Fiche et câble sont ajoutés pour le rendu.";
+const PLAQUES = {
+  pleine: {
+    sans: ["connecteur", "fusible"],
+    plaques: "Plaque pleine sur les deux flancs, 86 × 32 × 4 mm, 8 CHC M3×6.",
+    visserie: "32 vis M3 et 30 inserts laiton.",
+  },
+  lp16: {
+    sans: ["fusible"],
+    plaques: "plaque_bossage à droite, plaque pleine à gauche, 86 × 32 × 4 mm, 8 CHC M3×6.",
+    connecteur: `LP-16 2 pôles incliné de 30°, ${CONNECTEUR}`,
+    visserie: VISSERIE[1],
+  },
+  fusible: {
+    sans: [],
+    plaques: "plaque_bossage_fusible à droite, plaque pleine à gauche, 86 × 32 × 4 mm, 8 CHC M3×6.",
+    connecteur: `LP-16 2 pôles incliné de 45°, parallèle au fusible, ${CONNECTEUR}`,
+    visserie: VISSERIE[1],
+  },
+};
 
 const VUES = { iso: [1.2, 0.72, 0.72], face: [0, 0.02, 1], cote: [1, 0.18, 0.02], dos: [0.75, 0.45, -1] };
 
@@ -85,6 +108,7 @@ let voile = null;         // matériau de la légende, éclairé par le voyant
 let halo = null;
 let ouverture = 0;
 let etatVoyant = "ambre";
+let plaque = PLAQUES[params.get("plaque")] ? params.get("plaque") : "fusible";
 const visibles = Object.fromEntries(Object.keys(GROUPES).map((g) => [g, true]));
 let visserieVisible = true;
 
@@ -102,6 +126,8 @@ function anime(nom, duree, pas) {
 
 // --- cadrage
 
+const presentes = () => pieces.filter((p) => !p.option || p.option === plaque);
+
 // Part d'une pièce sur sa course, pour une ouverture k.
 const avance = (p, k) => adoucit(clamp01((k - p.retard) / (1 - p.retard)));
 
@@ -112,7 +138,7 @@ function cadrage(axe, k) {
   droite.normalize();
   const haut = new THREE.Vector3().crossVectors(axe, droite);
   const v = new THREE.Vector3();
-  const points = pieces.flatMap((p) => {
+  const points = presentes().flatMap((p) => {
     const f = avance(p, k);
     return p.coins.map((c) => {
       v.copy(p.sens).multiplyScalar(f).add(c);
@@ -182,9 +208,22 @@ function ouvreVers(k, duree = 1400) {
 // --- pièces
 
 function appliqueVisibilite() {
-  for (const p of pieces) p.objet.visible = visibles[p.groupe] && (!p.vis || visserieVisible);
+  for (const p of pieces) p.objet.visible = (!p.option || p.option === plaque) && visibles[p.groupe] && (!p.vis || visserieVisible);
   cibles = pieces.filter((p) => p.objet.visible).flatMap((p) => p.maillages).filter((m) => m.material.name !== "verre");
   sale = true;
+}
+
+function choisisPlaque(nom) {
+  const applique = () => {
+    plaque = nom;
+    appliqueVisibilite();
+    for (const b of $("plaques").children) b.setAttribute("aria-pressed", String(b.dataset.plaque === nom));
+    for (const l of $("liste").children) l.hidden = PLAQUES[nom].sans.includes(l.dataset.groupe);
+  };
+  if (pieces.length) recadre({ avant: ouverture, applique });
+  else applique();
+  if (PLAQUES[nom].sans.includes(epingle)) epingle = null;
+  montreFiche();
 }
 
 let survole = null;       // groupe sous le pointeur ou dans la liste
@@ -194,7 +233,7 @@ function montreFiche() {
   const g = survole ?? epingle;
   const [nom, detail] = g === "visserie" ? VISSERIE : (GROUPES[g] ?? ["Maquette", ficheParDefaut]);
   $("fiche-nom").textContent = nom;
-  $("fiche-detail").textContent = detail;
+  $("fiche-detail").textContent = PLAQUES[plaque][g] ?? detail;
   for (const l of $("liste").children) l.classList.toggle("marque", l.dataset.groupe === g);
   for (const p of pieces) {
     const allume = p.groupe === g || (g === "visserie" && p.vis);
@@ -329,7 +368,7 @@ function prepare(gltf) {
     if (!o.userData.offset) return;
     const p = {
       objet: o, nom: o.name, groupe: o.userData.groupe, vis: o.userData.vis,
-      offset: new THREE.Vector3(...o.userData.offset), maillages: [], materiaux: [],
+      option: o.userData.option, offset: new THREE.Vector3(...o.userData.offset), maillages: [], materiaux: [],
     };
     o.traverse((m) => {
       if (!m.isMesh) return;
@@ -381,7 +420,7 @@ function prepare(gltf) {
   const version = gltf.asset.extras?.version;
   if (version) $("version").textContent = `claudometre, version ${version}`;
 
-  appliqueVisibilite();
+  choisisPlaque(plaque);
   majVoyant(0);
   placeVue(params.has("vue") && VUES[params.get("vue")] ? params.get("vue") : "iso", true);
   attente.hidden = true;
@@ -445,6 +484,7 @@ $("ouverture").addEventListener("input", (e) => {
   ouvre(e.target.valueAsNumber / 100);
 });
 for (const b of $("vues").children) b.addEventListener("click", () => placeVue(b.dataset.vue));
+for (const b of $("plaques").children) b.addEventListener("click", () => choisisPlaque(b.dataset.plaque));
 for (const b of $("voyants").children) {
   b.addEventListener("click", () => {
     etatVoyant = b.dataset.voyant;

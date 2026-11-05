@@ -37,4 +37,10 @@ la source de Pages sur « GitHub Actions » dans les réglages du dépôt.
   celles de sa photo (`design/references/mrd076a/`).
 - `segments()` : l'heure affichée, 14:32 comme sur les rendus.
 
-`?ouverture=40&vue=face` dans l'adresse ouvre la page à 40 %, de face, sans l'animation du début.
+- `OPTIONS` : les plaques du flanc droit proposées dans la page, chacune avec ses pièces. `complet` exporte aussi
+  les plaques masquées dans Fusion. Une nouvelle plaque demande une entrée dans `PIECES`, `OPTIONS`, `plaque()`,
+  et dans `PLAQUES` en tête de `main.js`, plus sa touche dans `index.html`. La fiche et le câble de
+  `plaque_bossage_fusible` sont ceux de Blender, déplacés avec le LP-16 (`fiche_a_45()`).
+
+`?ouverture=40&vue=face&plaque=lp16` dans l'adresse ouvre la page à 40 %, de face, avec cette plaque (`pleine`, `lp16`
+ou `fusible`), sans l'animation du début.
