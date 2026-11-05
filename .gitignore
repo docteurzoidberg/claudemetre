@@ -10,6 +10,7 @@ design/renders/anim/
 
 # Réglages locaux de Claude Code
 .claude/settings.local.json
+CLAUDE.local.md
 
 # ESPHome : build et secrets (voir aussi esphome/.gitignore)
 esphome/.esphome/

@@ -1,4 +1,4 @@
-[Version française](../../README.md)
+[🇫🇷 Version française](../../README.md)
 
 # Claudemètre
 

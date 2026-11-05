@@ -1,4 +1,4 @@
-[English version](docs/en/README.md)
+[🇬🇧 English version](docs/en/README.md)
 
 # Claudemètre
 
