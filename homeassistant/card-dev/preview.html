@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claudemètre · aperçu de la carte</title>
+<!--
+  Aperçu de claudemetre-card sans Home Assistant : un faux objet `hass`,
+  piloté par le panneau de gauche, alimente six exemplaires de la carte
+  (thèmes clair et sombre ; une colonne étroite, une colonne de sections,
+  pleine largeur).
+
+  Lancer depuis la racine du dépôt :
+    python3 -m http.server 8765 --bind 127.0.0.1 --directory homeassistant
+  puis ouvrir http://localhost:8765/card-dev/preview.html
+-->
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: #e4e4e2; color: #1f1f1f; }
+  .layout { display: grid; grid-template-columns: 320px minmax(0, 1fr); min-height: 100vh; }
+  aside { position: sticky; top: 0; height: 100vh; overflow: auto; padding: 16px; background: #fff; border-right: 1px solid #d6d6d2; }
+  main { padding: 16px; display: grid; gap: 16px; align-content: start; }
+  h1 { font-size: 16px; margin: 0 0 4px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #666; margin: 18px 0 8px; }
+  .sub { color: #666; font-size: 12px; margin: 0; }
+  .ctl { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; margin-bottom: 10px; }
+  .ctl label { font-weight: 600; }
+  .ctl select { font: inherit; font-size: 12px; }
+  .ctl input[type=range] { grid-column: 1 / -1; width: 100%; }
+  .ctl output { grid-column: 1 / -1; color: #555; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .ctl.off input[type=range], .ctl.off output { opacity: .35; }
+  .row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .row label { flex: 1; }
+  .row input, .row select { font: inherit; width: 150px; }
+  .scenarios { display: flex; flex-wrap: wrap; gap: 6px; }
+  button { font: inherit; font-size: 12px; padding: 4px 8px; border: 1px solid #bbb; border-radius: 6px; background: #f6f6f4; cursor: pointer; }
+  button:hover { background: #ececea; }
+  .expect { font: 12px/1.5 ui-monospace, Consolas, monospace; background: #f4f4f1; border-radius: 6px; padding: 8px; white-space: pre-wrap; }
+  #log { font: 12px/1.5 ui-monospace, Consolas, monospace; background: #1c1c1c; color: #ddd; border-radius: 6px; padding: 8px; height: 150px; overflow: auto; white-space: pre-wrap; }
+  #log .err { color: #ff8a80; }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; background: #dff3df; color: #1d6b1d; }
+  .badge.bad { background: #fde0dc; color: #a31b0e; }
+  .theme { border-radius: 12px; padding: 16px; background: var(--primary-background-color); color: var(--primary-text-color); }
+  .theme > h2 { margin-top: 0; color: var(--secondary-text-color); }
+  .theme.light {
+    --primary-background-color: #fafafa; --card-background-color: #ffffff; --primary-text-color: #212121;
+    --secondary-text-color: #727272; --divider-color: #e0e0e0; --primary-color: #03a9f4;
+  }
+  .theme.dark {
+    --primary-background-color: #111111; --card-background-color: #1c1c1c; --primary-text-color: #e1e1e1;
+    --secondary-text-color: #9b9b9b; --divider-color: rgba(225, 225, 225, .12); --primary-color: #03a9f4;
+  }
+  .cards { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+  .slot { display: grid; gap: 6px; }
+  .slot > span { font-size: 12px; color: var(--secondary-text-color); }
+  .w1 { width: 320px; } .w2 { width: 492px; } .wfull { width: 100%; }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    aside { position: static; height: auto; border-right: 0; border-bottom: 1px solid #d6d6d2; }
+    .w1, .w2 { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <h1>Claudemètre · aperçu</h1>
+    <p class="sub">Faux <code>hass</code> : chaque réglage envoie un nouvel objet aux cartes, comme Home Assistant.</p>
+
+    <h2>Capteurs</h2>
+    <div id="controls"></div>
+
+    <div class="row"><label for="tz">Fuseau de HA</label>
+      <select id="tz">
+        <option>Europe/Paris</option><option>UTC</option><option>America/New_York</option>
+        <option>Asia/Tokyo</option><option>Australia/Sydney</option>
+      </select>
+    </div>
+    <div class="row"><label for="stale">stale_after (min)</label><input id="stale" type="number" min="1" value="30"></div>
+
+    <h2>Scénarios</h2>
+    <div class="scenarios" id="scenarios"></div>
+
+    <h2>Ce que l'objet afficherait</h2>
+    <div class="expect" id="expect"></div>
+
+    <h2>Journal <span class="badge" id="errors">0 erreur</span></h2>
+    <div id="log"></div>
+  </aside>
+
+  <main id="themes"></main>
+</div>
+
+<script>
+  // Remplaçant minimal de <ha-card> (défini par le frontend de HA).
+  customElements.define("ha-card", class extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: "open" }).innerHTML = `<style>:host {
+        display: block; color: var(--primary-text-color);
+        background: var(--ha-card-background, var(--card-background-color, #fff));
+        border-radius: var(--ha-card-border-radius, 12px);
+        border: var(--ha-card-border-width, 1px) solid var(--ha-card-border-color, var(--divider-color, #e0e0e0));
+        box-shadow: var(--ha-card-box-shadow, none);
+      }</style><slot></slot>`;
+    }
+  });
+
+  // Erreurs de la page et des cartes, comptées et journalisées.
+  const logEl = document.getElementById("log");
+  const errorsEl = document.getElementById("errors");
+  let errors = 0;
+  function log(msg, err = false) {
+    const line = document.createElement("div");
+    line.textContent = `${new Date().toLocaleTimeString("fr-FR")}  ${msg}`;
+    if (err) {
+      line.className = "err";
+      errors += 1;
+      errorsEl.textContent = `${errors} erreur${errors > 1 ? "s" : ""}`;
+      errorsEl.classList.add("bad");
+    }
+    logEl.prepend(line);
+  }
+  window.addEventListener("error", (e) => log(`erreur : ${e.message}`, true));
+  window.addEventListener("unhandledrejection", (e) => log(`promesse rejetée : ${e.reason}`, true));
+  for (const level of ["error", "warn"]) {
+    const orig = console[level].bind(console);
+    console[level] = (...args) => { log(`console.${level} : ${args.join(" ")}`, true); orig(...args); };
+  }
+</script>
+
+<script type="module">
+  await import(`../www/claudemetre/claudemetre-card.js?t=${Date.now()}`);
+
+  const MIN = 60000;
+  const IDS = {
+    session: "sensor.claude_usage_session",
+    week: "sensor.claude_usage_semaine",
+    session_reset: "sensor.claude_reset_session",
+    week_reset: "sensor.claude_reset_semaine",
+    last_measure: "sensor.claude_derniere_mesure",
+    active: "binary_sensor.claude_actif",
+    attention: "binary_sensor.claude_needattention",
+  };
+
+  // Réglages : valeur du curseur + état (valeur, unknown, unavailable, absente).
+  // Les heures sont gardées en absolu : le temps qui passe fait son effet,
+  // comme dans HA entre deux envois.
+  const CONTROLS = [
+    { key: "session", label: "Session", min: 0, max: 100, step: 1, unit: "%" },
+    { key: "week", label: "Semaine", min: 0, max: 100, step: 1, unit: "%" },
+    { key: "session_reset", label: "Reset session", min: -60, max: 300, step: 1, unit: "min", time: +1 },
+    { key: "week_reset", label: "Reset semaine", min: -48, max: 168, step: 1, unit: "h", time: +60 },
+    { key: "last_measure", label: "Dernière mesure", min: 0, max: 180, step: 1, unit: "min", time: -1 },
+    // Capteurs binaires : le curseur règle l'attribut, l'état est « on » au-dessus de 0.
+    { key: "active", label: "Agents au travail", min: 0, max: 4, step: 1, unit: "agents", attr: "agents" },
+    { key: "attention", label: "Demandes en attente", min: 0, max: 3, step: 1, unit: "demandes", attr: "demandes" },
+  ];
+  const state = { tz: "Europe/Paris", stale_after: 30, values: {}, modes: {}, at: {} };
+
+  const fmtTime = (ms) => new Intl.DateTimeFormat("fr-FR", {
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23", timeZone: state.tz,
+  }).format(ms);
+  const iso = (ms) => new Date(ms).toISOString().replace(/\.\d{3}Z$/, "+00:00");
+
+  function setValue(c, v) {
+    state.values[c.key] = v;
+    if (c.time) state.at[c.key] = Date.now() + c.time * v * MIN;
+  }
+
+  function describe(c) {
+    if (state.modes[c.key] !== "value") return state.modes[c.key];
+    const v = state.values[c.key];
+    if (c.attr) return `${v > 0 ? "on" : "off"} (${c.attr} : ${v})`;
+    if (!c.time) return `${v} %`;
+    const at = state.at[c.key];
+    const rel = c.time > 0 ? (v >= 0 ? `dans ${v} ${c.unit}` : `il y a ${-v} ${c.unit}`) : `il y a ${v} ${c.unit}`;
+    return `${rel} → ${fmtTime(at)} (heure HA)`;
+  }
+
+  const controlsEl = document.getElementById("controls");
+  for (const c of CONTROLS) {
+    const box = document.createElement("div");
+    box.className = "ctl";
+    box.innerHTML = `<label for="r-${c.key}">${c.label} <small>(${c.unit})</small></label>
+      <select id="m-${c.key}" aria-label="État de ${c.label}">
+        <option value="value">valeur</option><option>unknown</option><option>unavailable</option><option>absente</option>
+      </select>
+      <input id="r-${c.key}" type="range" min="${c.min}" max="${c.max}" step="${c.step}">
+      <output id="o-${c.key}"></output>`;
+    controlsEl.append(box);
+    box.querySelector("input").addEventListener("input", (e) => { setValue(c, Number(e.target.value)); push(); });
+    box.querySelector("select").addEventListener("change", (e) => { state.modes[c.key] = e.target.value; push(); });
+  }
+
+  function syncControls() {
+    for (const c of CONTROLS) {
+      document.getElementById(`r-${c.key}`).value = state.values[c.key];
+      document.getElementById(`m-${c.key}`).value = state.modes[c.key];
+      document.getElementById(`o-${c.key}`).value = describe(c);
+      document.getElementById(`r-${c.key}`).closest(".ctl").classList.toggle("off", state.modes[c.key] !== "value");
+    }
+    document.getElementById("tz").value = state.tz;
+    document.getElementById("stale").value = state.stale_after;
+  }
+
+  function makeHass(dark) {
+    const states = {};
+    const put = (key, value, attributes) => {
+      const mode = state.modes[key];
+      if (mode === "absente") return;
+      const id = IDS[key];
+      const changed = iso(Date.now());
+      states[id] = {
+        entity_id: id,
+        state: mode === "value" ? value : mode,
+        attributes,
+        last_changed: changed,
+        last_updated: changed,
+        context: { id: "apercu", parent_id: null, user_id: null },
+      };
+    };
+    const pctAttr = (name) => ({ unit_of_measurement: "%", state_class: "measurement", icon: "mdi:gauge", friendly_name: name });
+    const tsAttr = (name, key) => ({
+      device_class: "timestamp", icon: "mdi:timer-refresh-outline", friendly_name: name,
+      ...(key ? { epoch: String(Math.round(state.at[key] / 1000)) } : {}),
+    });
+    put("session", String(state.values.session), pctAttr("Claude usage session"));
+    put("week", String(state.values.week), pctAttr("Claude usage semaine"));
+    put("session_reset", iso(state.at.session_reset), tsAttr("Claude reset session", "session_reset"));
+    put("week_reset", iso(state.at.week_reset), tsAttr("Claude reset semaine", "week_reset"));
+    put("last_measure", iso(state.at.last_measure), tsAttr("Claude dernière mesure"));
+    put("active", state.values.active > 0 ? "on" : "off",
+        { device_class: "running", icon: "mdi:head-cog-outline", friendly_name: "Claude actif", agents: state.values.active });
+    put("attention", state.values.attention > 0 ? "on" : "off",
+        { icon: "mdi:bell-ring-outline", friendly_name: "Claude needattention", demandes: state.values.attention });
+    return {
+      states,
+      config: { time_zone: state.tz, version: "aperçu", unit_system: { temperature: "°C" } },
+      locale: { language: "fr", number_format: "language", time_format: "24", time_zone: "server" },
+      language: "fr",
+      themes: { darkMode: dark, theme: "default" },
+      user: { id: "apercu", name: "Aperçu", is_admin: true },
+      callService: async (domain, service, data) => log(`callService ${domain}.${service} ${JSON.stringify(data)}`),
+      callWS: async () => ({}),
+    };
+  }
+
+  // Ce que l'objet afficherait, calculé ici indépendamment de la carte
+  // (cahier des charges § 3), pour comparer.
+  function expectedModel(now = Date.now()) {
+    const val = (k) => (state.modes[k] === "value" ? state.values[k] : null);
+    const at = (k) => (state.modes[k] === "value" ? state.at[k] : null);
+    const sr = at("session_reset"), wr = at("week_reset"), lm = at("last_measure");
+    const sOver = sr !== null && sr <= now, wOver = wr !== null && wr <= now;
+    const on = (k) => state.modes[k] === "value" && state.values[k] > 0;
+    const many = (k) => (state.values[k] > 1 ? ` (${state.values[k]} ${CONTROLS.find((c) => c.key === k).attr})` : "");
+    return {
+      session: sOver ? 0 : val("session"),
+      week: wOver ? 0 : val("week"),
+      sOver, wOver,
+      clock: sr === null || sOver ? "--:--" : new Intl.DateTimeFormat("fr-FR", {
+        hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: state.tz,
+      }).format(sr),
+      stale: lm === null || now - lm > state.stale_after * MIN,
+      lamp: on("attention") ? "red" : on("active") ? "amber" : "off",
+      lampLabel: on("attention") ? `Claude attend une réponse${many("attention")}`
+        : on("active") ? `Claude au travail${many("active")}`
+        : ["active", "attention"].some((k) => state.modes[k] === "value") ? "Claude au repos" : "Activité de Claude inconnue",
+    };
+  }
+
+  function expected() {
+    const now = Date.now();
+    const m = expectedModel(now);
+    return [
+      `maintenant   ${fmtTime(now)} (${state.tz})`,
+      `jauge gauche ${m.session === null ? "repos (inconnu)" : `${m.session} %`}${m.sOver ? " (reset dépassé)" : ""}`,
+      `jauge droite ${m.week === null ? "repos (inconnu)" : `${m.week} %`}${m.wOver ? " (reset dépassé)" : ""}`,
+      `afficheur    ${m.clock}${m.stale ? " atténué (données périmées)" : ""}`,
+      `voyant       ${{ red: "rouge, clignote (attend une réponse)", amber: "ambre, respire (au travail)", off: "éteint" }[m.lamp]}`,
+    ].join("\n");
+  }
+
+  // Six cartes : deux thèmes × trois largeurs.
+  const cards = [];
+  const themesEl = document.getElementById("themes");
+  for (const [theme, title] of [["light", "Thème clair"], ["dark", "Thème sombre"]]) {
+    const sec = document.createElement("section");
+    sec.className = `theme ${theme}`;
+    sec.innerHTML = `<h2>${title}</h2><div class="cards"></div>`;
+    for (const [w, label] of [["w1", "Une colonne étroite (320 px)"], ["w2", "Colonne de sections (492 px)"], ["wfull", "Pleine largeur"]]) {
+      const slot = document.createElement("div");
+      slot.className = `slot ${w}`;
+      slot.innerHTML = `<span>${label}</span>`;
+      const card = document.createElement("claudemetre-card");
+      card.setConfig({ stale_after: state.stale_after });
+      slot.append(card);
+      sec.querySelector(".cards").append(slot);
+      cards.push({ card, dark: theme === "dark" });
+    }
+    themesEl.append(sec);
+  }
+
+  function push() {
+    syncControls();
+    for (const { card, dark } of cards) card.hass = makeHass(dark);
+    document.getElementById("expect").textContent = expected();
+  }
+
+  document.getElementById("tz").addEventListener("change", (e) => { state.tz = e.target.value; push(); });
+  document.getElementById("stale").addEventListener("change", (e) => {
+    state.stale_after = Number(e.target.value);
+    for (const { card } of cards) {
+      try {
+        card.setConfig({ stale_after: state.stale_after });
+      } catch (err) {
+        log(`setConfig refusé : ${err.message}`);
+      }
+    }
+    push();
+  });
+
+  document.addEventListener("hass-more-info", (e) => log(`plus d'infos → ${e.detail.entityId}`));
+
+  const SCENARIOS = {
+    "Normal": { session: 62, week: 38, session_reset: 90, week_reset: 75, last_measure: 1, active: 1 },
+    "Presque plein": { session: 97, week: 88, session_reset: 25, week_reset: 20, last_measure: 1 },
+    "Reset dans 1 min": { session: 81, week: 38, session_reset: 1, week_reset: 75, last_measure: 1 },
+    "Reset dépassé": { session: 62, week: 38, session_reset: -5, week_reset: -1, last_measure: 1 },
+    "Périmé": { session: 62, week: 38, session_reset: 90, week_reset: 75, last_measure: 45 },
+    "Attend une réponse": { session: 62, week: 38, session_reset: 90, week_reset: 75, last_measure: 1, attention: 1 },
+    "Attente + travail": { session: 62, week: 38, session_reset: 90, week_reset: 75, last_measure: 1, active: 2, attention: 2 },
+    "Inconnu": "unknown",
+    "Indisponible": "unavailable",
+    "Entités absentes": "absente",
+  };
+  const scenariosEl = document.getElementById("scenarios");
+  for (const [name, sc] of Object.entries(SCENARIOS)) {
+    const b = document.createElement("button");
+    b.textContent = name;
+    b.addEventListener("click", () => apply(sc));
+    scenariosEl.append(b);
+  }
+  function apply(sc) {
+    for (const c of CONTROLS) {
+      if (typeof sc === "string") {
+        state.modes[c.key] = sc;
+      } else {
+        state.modes[c.key] = "value";
+        setValue(c, sc[c.key] ?? 0);
+      }
+    }
+    push();
+  }
+
+  // Lecture de l'état affiché par une carte (aiguilles, segments allumés,
+  // atténuation), pour la vérification automatique.
+  const DIGITS = { abcdef: "0", bc: "1", abdeg: "2", abcdg: "3", bcfg: "4", acdfg: "5", acdefg: "6",
+                   abc: "7", abcdefg: "8", abcdfg: "9", g: "-", "": " " };
+  function readCard(card) {
+    const root = card.shadowRoot;
+    const pct = (key) => {
+      const m = /rotate\((-?[\d.]+)deg\)/.exec(root.querySelector(`.hit[data-key="${key}"] .needle`).style.transform);
+      return m ? (Number(m[1]) + 45) / 0.9 : null;
+    };
+    const digit = (i) => DIGITS[[...root.querySelectorAll(`.seg.on[data-digit="${i}"]`)].map((p) => p.dataset.seg).sort().join("")] ?? "?";
+    const colon = root.querySelector(".seg[data-colon]").classList.contains("on") ? ":" : " ";
+    const value = (key) => root.querySelector(`.hit[data-key="${key}"] .val`).dataset.text;
+    const lamp = root.querySelector('.hit[data-key="lamp"]');
+    return {
+      lamp: lamp.dataset.state,
+      lampLabel: lamp.getAttribute("aria-label"),
+      lampAnim: getComputedStyle(lamp.querySelector("path.lamp-light")).animationName,
+      session: pct("session"), week: pct("week"),
+      sessionText: value("session"), weekText: value("week"),
+      clock: `${digit(0)}${digit(1)}${colon}${digit(2)}${digit(3)}`,
+      stale: root.querySelector("svg").classList.contains("stale"),
+    };
+  }
+
+  function check(label, exp) {
+    let bad = 0;
+    cards.forEach(({ card, dark }, i) => {
+      const got = readCard(card);
+      const diff = [];
+      for (const k of ["session", "week"]) {
+        const e = Math.min(100, Math.max(0, exp[k] ?? 0));
+        if (got[k] === null || Math.abs(got[k] - e) > 0.01) diff.push(`${k} ${got[k]?.toFixed(1)} ≠ ${e}`);
+        const text = exp[k] === null ? "-- %" : `${Math.round(e)} %`;
+        if (got[`${k}Text`] !== text) diff.push(`valeur ${k} « ${got[`${k}Text`]} » ≠ « ${text} »`);
+      }
+      if (got.clock !== exp.clock) diff.push(`afficheur « ${got.clock} » ≠ « ${exp.clock} »`);
+      if (got.stale !== exp.stale) diff.push(`atténué ${got.stale} ≠ ${exp.stale}`);
+      if (got.lamp !== exp.lamp) diff.push(`voyant ${got.lamp} ≠ ${exp.lamp}`);
+      if (got.lampLabel !== exp.lampLabel) diff.push(`libellé du voyant « ${got.lampLabel} » ≠ « ${exp.lampLabel} »`);
+      const anim = matchMedia("(prefers-reduced-motion: reduce)").matches ? "none"
+        : { off: "none", amber: "lamp-breathe", red: "lamp-blink" }[exp.lamp];
+      if (got.lampAnim !== anim) diff.push(`animation du voyant ${got.lampAnim} ≠ ${anim}`);
+      if (diff.length) {
+        bad += 1;
+        log(`✗ ${label}, carte ${i + 1} (${dark ? "sombre" : "clair"}) : ${diff.join(", ")}`, true);
+      }
+    });
+    if (!bad) log(`✓ ${label}`);
+    return bad;
+  }
+
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  async function verify() {
+    log("vérification…");
+    // Les aiguilles et les valeurs se posent deux images après l'insertion des cartes.
+    for (let i = 0; i < 200 && cards.some(({ card }) => !readCard(card).sessionText); i++) await wait(50);
+    let bad = 0;
+    for (const [name, sc] of Object.entries(SCENARIOS)) {
+      apply(sc);
+      bad += check(name, expectedModel());
+    }
+    // Fuseau de HA ≠ fuseau du navigateur.
+    apply(SCENARIOS.Normal);
+    for (const tz of ["Asia/Tokyo", "America/New_York"]) {
+      state.tz = tz;
+      push();
+      bad += check(`fuseau ${tz}`, expectedModel());
+    }
+    state.tz = "Europe/Paris";
+    // Reset qui passe sans nouvel envoi de HA : la minuterie de 30 s de la carte.
+    apply({ ...SCENARIOS.Normal, session_reset: 0.05 });
+    bad += check("reset dans 3 s", expectedModel());
+    await wait(31500);
+    bad += check("reset passé depuis 28 s, sans envoi de HA", expectedModel());
+    // Plus d'infos : le voyant ouvre l'activité, ou l'attente quand il est rouge.
+    const seen = [];
+    const onInfo = (e) => seen.push(e.detail.entityId);
+    const click = (key) => cards[0].card.shadowRoot.querySelector(`.hit[data-key="${key}"]`).dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    document.addEventListener("hass-more-info", onInfo);
+    apply(SCENARIOS.Normal);
+    for (const key of ["session", "week", "display", "lamp"]) click(key);
+    apply(SCENARIOS["Attend une réponse"]);
+    click("lamp");
+    document.removeEventListener("hass-more-info", onInfo);
+    const want = [IDS.session, IDS.week, IDS.session_reset, IDS.active, IDS.attention];
+    if (seen.join() === want.join()) log("✓ plus d'infos : session, semaine, reset session, activité, attente");
+    else { bad += 1; log(`✗ plus d'infos : ${seen.join(", ")}`, true); }
+    // Configuration refusée.
+    for (const cfg of [{ entities: "sensor.x" }, { stale_after: 0 }]) {
+      try { document.createElement("claudemetre-card").setConfig(cfg); bad += 1; log(`✗ config acceptée : ${JSON.stringify(cfg)}`, true); }
+      catch (err) { log(`✓ config refusée : ${err.message}`); }
+    }
+    apply(SCENARIOS.Normal);
+    log(bad ? `vérification : ${bad} échec(s)` : "vérification : tout est bon", bad > 0);
+    document.title = bad ? `ÉCHEC ${bad}` : "OK";
+  }
+
+  const vb = document.createElement("button");
+  vb.textContent = "Vérifier";
+  vb.style.fontWeight = "600";
+  vb.addEventListener("click", verify);
+  scenariosEl.append(vb);
+
+  const params = new URLSearchParams(location.search);
+  apply(SCENARIOS[params.get("scenario")] ?? SCENARIOS.Normal);
+  if (params.has("verifier")) verify();
+  // Le temps passe : la description et l'attendu suivent ; les cartes, elles,
+  // ont leur propre minuterie de 30 s et ne reçoivent rien de plus.
+  setInterval(() => {
+    for (const c of CONTROLS) document.getElementById(`o-${c.key}`).value = describe(c);
+    document.getElementById("expect").textContent = expected();
+  }, 1000);
+  log("aperçu prêt");
+</script>
+</body>
+</html>

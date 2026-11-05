@@ -1,0 +1,29 @@
+{
+  "dial_mm": 40.8,
+  "window_r": 19.4,
+  "chord_z": -11.6,
+  "pivot_z": -8.95,
+  "arc_r": 22.5,
+  "sweep_deg": 76.8,
+  "needle_len": 22.5,
+  "plate": {
+    "radius": 20.2,
+    "dome_z": -8.2,
+    "dome_r": 8.76,
+    "shoulder_z": -5.22,
+    "fillet_r": 3.53,
+    "slot_half": 12.31,
+    "hole_x": 15.51,
+    "hole_z": -2.3,
+    "hole_d": 2.6
+  },
+  "print": {
+    "seat": 0.8,
+    "color": 0.8,
+    "total": 2.0,
+    "pillar_d": 5.0,
+    "pillar_gap": 0.2,
+    "nozzle": 0.4
+  },
+  "notes": "mm, origine au centre de la plaque du cadran (supposée centrée sur la fenêtre), z vers le haut. plate, pivot_z et sweep_deg : mesurés le 29/10/2026 sur photo redressée, corrigés après le premier tirage (radius 20,4 -> 20,2 : entrait trop juste ; hole_x 15,31 -> 15,51 : entraxe réel des piliers 31,02) du cadran démonté (design/references/so45/README.md), à ±0,1 mm. plate = plaque d'origine : disque, découpe centrale (dôme de centre dome_z et rayon dome_r, épaulements à shoulder_z raccordés par un congé fillet_r aux flancs verticaux à ±slot_half), deux trous de vis. sweep_deg = 0 à pleine échelle de l'échelle d'origine. window_r : modèle GrabCAD. chord_z (bord du masque, la découpe reste visible au-dessus) et needle_len (la pointe atteint le bout des grands traits) : relevés sur une photo de face du voltmètre (design/references/so45/voltmetre_face.jpg), à ±0,5 mm ; le modèle GrabCAD mettait le masque à -12,65. arc_r : bord extérieur de l'arc, sous la pointe de l'aiguille. print = cadran imprimé (so45_print.py), qui remplace la plaque d'origine sur ses deux piliers, épaisseurs depuis la face : seat = face au-dessus de l'appui sur les piliers (0,8 à l'essai ; l'aiguille, penchée, a le moins de jeu près de l'axe : si elle frotte, ramener à l'épaisseur de la plaque d'alu, ~0,4) ; color = profondeur des couleurs (opacité) ; total = épaisseur totale, le fond remplit le dos sauf des lamages de pillar_d + 2 × pillar_gap autour des trous, sous l'appui (piliers Ø 5, mesurés sur le premier tirage du 29/10/2026) ; buse."
+}

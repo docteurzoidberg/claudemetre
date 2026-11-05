@@ -1,0 +1,469 @@
+<title>Câblage du Claudemètre</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  /* Planche d'atelier : le schéma en pleine largeur en tête, puis la liste des fils et les notes. */
+  :root {
+    --paper: #E7E9E0;
+    --panel: #F4F5EF;
+    --pcb: #D9DCCF;
+    --ink: #1C2016;
+    --muted: #5B6252;
+    --rule: #C3C7B6;
+    --brass: #8C6819;
+    --brass-tint: #EBDDB8;
+    --display: #121310;
+    --amber: #F2AE1C;
+    /* couleurs de fil proposées */
+    --w-gnd: #22251C;
+    --w-3v3: #CC6511;
+    --w-5v: #BF3128;
+    --w-g4: #2B60AE;
+    --w-g5: #7944AC;
+    --w-clk: #2A8450;
+    --w-dio: #86572A;
+    --w-din: #A87D00;
+    --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+    --f-body: "Barlow", "Segoe UI", system-ui, sans-serif;
+    --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #13160F; --panel: #1B1F16; --pcb: #20261B; --ink: #E2E5D8;
+      --muted: #99A08A; --rule: #363C2D; --brass: #D4A848; --brass-tint: #3A3119;
+      --w-gnd: #B7BCAA; --w-3v3: #F08F38; --w-5v: #EC5F51; --w-g4: #6EA1EC;
+      --w-g5: #B08AE6; --w-clk: #5BC489; --w-dio: #C8946A; --w-din: #E6BD36;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #13160F; --panel: #1B1F16; --pcb: #20261B; --ink: #E2E5D8;
+    --muted: #99A08A; --rule: #363C2D; --brass: #D4A848; --brass-tint: #3A3119;
+    --w-gnd: #B7BCAA; --w-3v3: #F08F38; --w-5v: #EC5F51; --w-g4: #6EA1EC;
+    --w-g5: #B08AE6; --w-clk: #5BC489; --w-dio: #C8946A; --w-din: #E6BD36;
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 16px/1.55 var(--f-body);
+  }
+  .wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 40px 64px;
+    display: grid;
+    gap: 44px;
+  }
+  header { display: grid; gap: 10px; }
+  .eyebrow {
+    font: 600 14px/1 var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: var(--brass);
+  }
+  h1, h2, h3 { font-family: var(--f-display); font-weight: 600; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(34px, 6vw, 48px); line-height: 1.05; letter-spacing: .01em; }
+  h2 { font-size: 26px; line-height: 1.15; }
+  h3 { font-size: 18px; line-height: 1.2; letter-spacing: .01em; }
+  p { margin: 0; }
+  .lede { max-width: 62ch; font-size: 18px; }
+  .meta { color: var(--muted); font-size: 14px; }
+  code, .mono { font-family: var(--f-mono); font-size: .88em; }
+
+  figure { margin: 0; display: grid; gap: 12px; }
+  .sheet {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    overflow-x: auto;
+  }
+  .sheet svg { display: block; width: 100%; min-width: 760px; height: auto; }
+  figcaption { color: var(--muted); font-size: 14px; max-width: 75ch; }
+
+  section { display: grid; gap: 16px; min-width: 0; }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th {
+    font: 600 13px/1.2 var(--f-display);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    text-align: left;
+    padding: 0 12px 8px;
+    border-bottom: 1.5px solid var(--ink);
+  }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  td:first-child, th:first-child { padding-left: 0; }
+  .wire { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .sw { width: 26px; height: 6px; border-radius: 3px; flex: none; }
+  .pin { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .pin b { font-weight: 600; }
+  .num { color: var(--muted); }
+  .note { color: var(--muted); font-size: 14px; }
+
+  .notes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px 32px;
+  }
+  .notes article { display: grid; gap: 6px; align-content: start; padding-top: 12px; border-top: 1px solid var(--rule); min-width: 0; }
+  .notes article.warn h3 { color: var(--w-5v); }
+
+  .power { max-width: 640px; }
+  .power td:last-child { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--rule); padding-top: 14px; }
+
+  /* Schéma */
+  .sch { color: var(--ink); font-family: var(--f-mono); }
+  .sch text { fill: var(--ink); font-size: 11px; }
+  .sch .t-title { font-family: var(--f-display); font-size: 16px; font-weight: 600; letter-spacing: .02em; }
+  .sch .t-dim { fill: var(--muted); }
+  .sch .t-acc { fill: var(--brass); font-weight: 600; }
+  .sch .t-on { font-weight: 600; }
+  .sch .pcb { fill: var(--pcb); stroke: var(--ink); stroke-width: 1.4; }
+  .sch .box { fill: var(--panel); stroke: var(--ink); stroke-width: 1.4; }
+  .sch .mod { fill: var(--panel); stroke: var(--muted); stroke-width: 1.2; }
+  .sch .ant { fill: url(#hatch); stroke: none; }
+  .sch .usb { fill: var(--rule); stroke: var(--ink); stroke-width: 1.2; }
+  .sch .cable { fill: none; stroke: var(--muted); stroke-width: 6; stroke-linecap: round; }
+  .sch .pad { fill: var(--panel); stroke: var(--muted); stroke-width: 1; }
+  .sch .pad.on { fill: var(--brass); stroke: var(--brass); }
+  .sch .term { fill: var(--panel); stroke: var(--ink); stroke-width: 1.6; }
+  .sch .int { fill: none; stroke: var(--ink); stroke-width: 1.3; }
+  .sch .node { fill: var(--ink); }
+  .sch .rs { fill: var(--panel); stroke: var(--ink); stroke-width: 1.3; }
+  .sch .radd { fill: var(--brass-tint); stroke: var(--brass); stroke-width: 2; }
+  .sch .display { fill: var(--display); }
+  .sch .digits { fill: var(--amber); font-size: 34px; font-weight: 600; letter-spacing: .04em; }
+  .sch .led { fill: var(--amber); stroke: var(--brass); stroke-width: 1.2; }
+  .sch .w { fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+  .w-gnd { stroke: var(--w-gnd); }
+  .w-3v3 { stroke: var(--w-3v3); }
+  .w-5v { stroke: var(--w-5v); }
+  .w-g4 { stroke: var(--w-g4); }
+  .w-g5 { stroke: var(--w-g5); }
+  .w-clk { stroke: var(--w-clk); }
+  .w-dio { stroke: var(--w-dio); }
+  .w-din { stroke: var(--w-din); }
+  .sch .dot { fill: var(--w-gnd); }
+  .sch .diode { fill: var(--w-5v); }
+  .sch text.c-3v3 { fill: var(--w-3v3); }
+  .sch text.c-5v { fill: var(--w-5v); }
+  .sch text.c-g4 { fill: var(--w-g4); }
+  .sch text.c-g5 { fill: var(--w-g5); }
+  .sch text.c-gnd { fill: var(--w-gnd); }
+  .bg-gnd { background: var(--w-gnd); }
+  .bg-3v3 { background: var(--w-3v3); }
+  .bg-5v { background: var(--w-5v); }
+  .bg-g4 { background: var(--w-g4); }
+  .bg-g5 { background: var(--w-g5); }
+  .bg-clk { background: var(--w-clk); }
+  .bg-dio { background: var(--w-dio); }
+  .bg-din { background: var(--w-din); }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Claudemètre · schéma de câblage</span>
+    <h1>Câblage du Claudemètre</h1>
+    <p class="lede">Une carte ESP32-S3-DevKitC-1, deux voltmètres SO-45, l'afficheur TM1637 et le ruban du voyant CLAUDE. Huit fils, tous sur le connecteur J1, et une seule pièce ajoutée hors des modules : une diode.</p>
+    <p class="meta">Brochage de <code>esphome/claudemetre.yaml</code> · 30/10/2026</p>
+  </header>
+
+  <figure>
+    <div class="sheet">
+      <svg class="sch" viewBox="0 0 940 680" role="img" aria-label="Schéma de câblage : du connecteur J1 de l'ESP32-S3, GPIO4 et GPIO5 vont à la borne plus des voltmètres session et semaine, GPIO6 et GPIO7 au CLK et DIO du TM1637 alimenté en 3V3, GPIO15 au DIN du ruban WS2812B alimenté par le 5V0 à travers une diode 1N400x ; toutes les masses sont communes.">
+        <defs>
+          <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" stroke-width="1" opacity=".35"/>
+          </pattern>
+          <marker id="needle" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L6,3 L0,6 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <!-- ═══ Carte ESP32-S3-DevKitC-1, vue de dessus, USB en bas ═══ -->
+        <text class="t-title" x="800" y="24" text-anchor="middle">ESP32-S3-DevKitC-1 · N16R8</text>
+        <rect class="pcb" x="700" y="36" width="200" height="560" rx="8"/>
+        <rect class="mod" x="800" y="52" width="72" height="190" rx="3"/>
+        <rect class="ant" x="800" y="52" width="72" height="40"/>
+        <text class="t-dim" x="836" y="76" text-anchor="middle">antenne</text>
+        <text x="836" y="122" text-anchor="middle">ESP32-S3</text>
+        <text class="t-dim" x="836" y="138" text-anchor="middle">WROOM-1</text>
+        <text class="t-dim" x="836" y="154" text-anchor="middle">N16R8</text>
+        <text class="t-dim" x="716" y="56" text-anchor="middle">J1</text>
+        <text class="t-dim" x="884" y="56" text-anchor="middle">J3</text>
+        <rect class="usb" x="736" y="590" width="36" height="18" rx="3"/>
+        <rect class="usb" x="824" y="590" width="36" height="18" rx="3"/>
+        <text class="t-dim" x="754" y="624" text-anchor="middle">USB</text>
+        <text class="t-dim" x="842" y="624" text-anchor="middle">UART</text>
+        <path class="cable" d="M754,632 V650"/>
+        <text class="t-dim" x="754" y="672" text-anchor="middle">5 V par câble USB-C (l'un ou l'autre port)</text>
+
+        <!-- ═══ SO-45 A, session ═══ -->
+        <rect class="box" x="80" y="86" width="340" height="120" rx="6"/>
+        <text class="t-title" x="96" y="108">SO-45 A · session</text>
+        <text class="t-dim" x="406" y="108" text-anchor="end">cadran « % · 5 H »</text>
+        <text x="320" y="128" text-anchor="middle">R_s 4,65 kΩ</text>
+        <path class="int" d="M420,142 H350 M290,142 H206 M174,142 H80"/>
+        <path class="int" d="M370,142 V172 H350 M290,172 H270 V142"/>
+        <rect class="rs" x="290" y="134" width="60" height="16"/>
+        <rect class="radd" x="290" y="164" width="60" height="16"/>
+        <circle class="node" cx="370" cy="142" r="2.5"/>
+        <circle class="node" cx="270" cy="142" r="2.5"/>
+        <circle class="rs" cx="190" cy="142" r="16"/>
+        <line class="int" x1="181" y1="152" x2="199" y2="132" marker-end="url(#needle)"/>
+        <text class="t-acc" x="320" y="196" text-anchor="middle">6,2 kΩ ajoutée</text>
+        <text class="t-dim" x="190" y="176" text-anchor="middle">cadre ≈ 120 Ω</text>
+        <text class="t-on" x="404" y="134" text-anchor="middle">+</text>
+        <text class="t-on" x="96" y="134" text-anchor="middle">−</text>
+
+        <!-- ═══ SO-45 B, semaine ═══ -->
+        <rect class="box" x="80" y="231" width="340" height="120" rx="6"/>
+        <text class="t-title" x="96" y="253">SO-45 B · semaine</text>
+        <text class="t-dim" x="406" y="253" text-anchor="end">cadran « % · 7 J »</text>
+        <text x="320" y="273" text-anchor="middle">R_s 4,65 kΩ</text>
+        <path class="int" d="M420,287 H350 M290,287 H206 M174,287 H80"/>
+        <path class="int" d="M370,287 V317 H350 M290,317 H270 V287"/>
+        <rect class="rs" x="290" y="279" width="60" height="16"/>
+        <rect class="radd" x="290" y="309" width="60" height="16"/>
+        <circle class="node" cx="370" cy="287" r="2.5"/>
+        <circle class="node" cx="270" cy="287" r="2.5"/>
+        <circle class="rs" cx="190" cy="287" r="16"/>
+        <line class="int" x1="181" y1="297" x2="199" y2="277" marker-end="url(#needle)"/>
+        <text class="t-acc" x="320" y="341" text-anchor="middle">6,2 kΩ ajoutée</text>
+        <text class="t-dim" x="190" y="321" text-anchor="middle">cadre ≈ 160 Ω</text>
+        <text class="t-on" x="404" y="279" text-anchor="middle">+</text>
+        <text class="t-on" x="96" y="279" text-anchor="middle">−</text>
+
+        <!-- ═══ TM1637 ═══ -->
+        <rect class="box" x="180" y="372" width="240" height="100" rx="6"/>
+        <text class="t-title" x="192" y="391">TM1637 · 0,56″</text>
+        <rect class="display" x="192" y="402" width="170" height="58" rx="3"/>
+        <text class="digits" x="277" y="444" text-anchor="middle">14:32</text>
+        <text x="410" y="396" text-anchor="end">VCC</text>
+        <text x="410" y="416" text-anchor="end">CLK</text>
+        <text x="410" y="436" text-anchor="end">DIO</text>
+        <text x="410" y="456" text-anchor="end">GND</text>
+
+        <!-- ═══ Voyant CLAUDE ═══ -->
+        <rect class="box" x="160" y="500" width="260" height="88" rx="6"/>
+        <text class="t-title" x="172" y="520">Voyant CLAUDE</text>
+        <text class="t-dim" x="172" y="536">ruban WS2812B · 4 LED</text>
+        <rect class="led" x="174" y="548" width="18" height="18" rx="2"/>
+        <rect class="led" x="200" y="548" width="18" height="18" rx="2"/>
+        <rect class="led" x="226" y="548" width="18" height="18" rx="2"/>
+        <rect class="led" x="252" y="548" width="18" height="18" rx="2"/>
+        <text x="410" y="520" text-anchor="end">DIN</text>
+        <text x="410" y="554" text-anchor="end">+5V</text>
+        <text x="410" y="578" text-anchor="end">GND</text>
+
+        <!-- ═══ Fils ═══ -->
+        <!-- masse commune -->
+        <path class="w w-gnd" d="M80,142 H36 V600 H690 V574"/>
+        <path class="w w-gnd" d="M36,287 H80"/>
+        <path class="w w-gnd" d="M420,452 H440 V486 H36"/>
+        <path class="w w-gnd" d="M420,574 H711"/>
+        <!-- 3V3, avec deux ponts sur les fils des jauges -->
+        <path class="w w-3v3" d="M711,70 H600 V136 A6,6 0 0 1 600,148 V160 A6,6 0 0 1 600,172 V392 H420"/>
+        <!-- signaux -->
+        <path class="w w-g4" d="M711,142 H420"/>
+        <path class="w w-g5" d="M711,166 H580 V287 H420"/>
+        <path class="w w-clk" d="M711,190 H620 V412 H420"/>
+        <path class="w w-dio" d="M711,214 H640 V432 H420"/>
+        <path class="w w-din" d="M711,238 H660 V516 H420"/>
+        <!-- 5V0 par la diode (bague côté ruban) -->
+        <path class="w w-5v" d="M711,550 H552 M534,550 H420"/>
+        <polygon class="diode" points="552,541 552,559 535,550"/>
+        <line class="w w-5v" x1="534" y1="541" x2="534" y2="559"/>
+
+        <!-- étiquettes de fil -->
+        <text class="c-3v3" x="655" y="63" text-anchor="middle">3V3</text>
+        <text class="c-g4" x="432" y="136">PWM 25 kHz</text>
+        <text class="c-g5" x="432" y="281">PWM 25 kHz</text>
+        <text class="c-3v3" x="432" y="386">3V3</text>
+        <text class="c-5v" x="544" y="537" text-anchor="middle">1N400x</text>
+        <text class="c-5v" x="478" y="543" text-anchor="middle">≈ 4,3 V</text>
+        <text class="c-gnd" x="48" y="593">GND commun</text>
+
+        <!-- jonctions -->
+        <circle class="dot" cx="36" cy="287" r="4"/>
+        <circle class="dot" cx="36" cy="486" r="4"/>
+        <circle class="dot" cx="690" cy="574" r="4"/>
+
+        <!-- bornes des composants -->
+        <circle class="term" cx="420" cy="142" r="4.5"/>
+        <circle class="term" cx="80" cy="142" r="4.5"/>
+        <circle class="term" cx="420" cy="287" r="4.5"/>
+        <circle class="term" cx="80" cy="287" r="4.5"/>
+        <rect class="pad on" x="416" y="388" width="8" height="8"/>
+        <rect class="pad on" x="416" y="408" width="8" height="8"/>
+        <rect class="pad on" x="416" y="428" width="8" height="8"/>
+        <rect class="pad on" x="416" y="448" width="8" height="8"/>
+        <rect class="pad on" x="416" y="512" width="8" height="8"/>
+        <rect class="pad on" x="416" y="546" width="8" height="8"/>
+        <rect class="pad on" x="416" y="570" width="8" height="8"/>
+
+        <!-- J1 : broche n à y = 70 + 24 (n − 1) -->
+        <rect class="pad on" x="711" y="65" width="10" height="10"/><text class="t-on" x="730" y="74">3V3</text>
+        <rect class="pad" x="711" y="89" width="10" height="10"/><text class="t-dim" x="730" y="98">3V3</text>
+        <rect class="pad" x="711" y="113" width="10" height="10"/><text class="t-dim" x="730" y="122">RST</text>
+        <rect class="pad on" x="711" y="137" width="10" height="10"/><text class="t-on" x="730" y="146">GPIO4</text>
+        <rect class="pad on" x="711" y="161" width="10" height="10"/><text class="t-on" x="730" y="170">GPIO5</text>
+        <rect class="pad on" x="711" y="185" width="10" height="10"/><text class="t-on" x="730" y="194">GPIO6</text>
+        <rect class="pad on" x="711" y="209" width="10" height="10"/><text class="t-on" x="730" y="218">GPIO7</text>
+        <rect class="pad on" x="711" y="233" width="10" height="10"/><text class="t-on" x="730" y="242">GPIO15</text>
+        <rect class="pad" x="711" y="257" width="10" height="10"/><text class="t-dim" x="730" y="266">GPIO16</text>
+        <rect class="pad" x="711" y="281" width="10" height="10"/><text class="t-dim" x="730" y="290">GPIO17</text>
+        <rect class="pad" x="711" y="305" width="10" height="10"/><text class="t-dim" x="730" y="314">GPIO18</text>
+        <rect class="pad" x="711" y="329" width="10" height="10"/><text class="t-dim" x="730" y="338">GPIO8</text>
+        <rect class="pad" x="711" y="353" width="10" height="10"/><text class="t-dim" x="730" y="362">GPIO3</text>
+        <rect class="pad" x="711" y="377" width="10" height="10"/><text class="t-dim" x="730" y="386">GPIO46</text>
+        <rect class="pad" x="711" y="401" width="10" height="10"/><text class="t-dim" x="730" y="410">GPIO9</text>
+        <rect class="pad" x="711" y="425" width="10" height="10"/><text class="t-dim" x="730" y="434">GPIO10</text>
+        <rect class="pad" x="711" y="449" width="10" height="10"/><text class="t-dim" x="730" y="458">GPIO11</text>
+        <rect class="pad" x="711" y="473" width="10" height="10"/><text class="t-dim" x="730" y="482">GPIO12</text>
+        <rect class="pad" x="711" y="497" width="10" height="10"/><text class="t-dim" x="730" y="506">GPIO13</text>
+        <rect class="pad" x="711" y="521" width="10" height="10"/><text class="t-dim" x="730" y="530">GPIO14</text>
+        <rect class="pad on" x="711" y="545" width="10" height="10"/><text class="t-on" x="730" y="554">5V0</text>
+        <rect class="pad on" x="711" y="569" width="10" height="10"/><text class="t-on" x="730" y="578">GND</text>
+
+        <!-- J3, inutilisé -->
+        <rect class="pad" x="879" y="65" width="10" height="10"/>
+        <rect class="pad" x="879" y="89" width="10" height="10"/>
+        <rect class="pad" x="879" y="113" width="10" height="10"/>
+        <rect class="pad" x="879" y="137" width="10" height="10"/>
+        <rect class="pad" x="879" y="161" width="10" height="10"/>
+        <rect class="pad" x="879" y="185" width="10" height="10"/>
+        <rect class="pad" x="879" y="209" width="10" height="10"/>
+        <rect class="pad" x="879" y="233" width="10" height="10"/>
+        <rect class="pad" x="879" y="257" width="10" height="10"/>
+        <rect class="pad" x="879" y="281" width="10" height="10"/>
+        <rect class="pad" x="879" y="305" width="10" height="10"/>
+        <rect class="pad" x="879" y="329" width="10" height="10"/>
+        <rect class="pad" x="879" y="353" width="10" height="10"/>
+        <rect class="pad" x="879" y="377" width="10" height="10"/>
+        <rect class="pad" x="879" y="401" width="10" height="10"/>
+        <rect class="pad" x="879" y="425" width="10" height="10"/>
+        <rect class="pad" x="879" y="449" width="10" height="10"/>
+        <rect class="pad" x="879" y="473" width="10" height="10"/>
+        <rect class="pad" x="879" y="497" width="10" height="10"/>
+        <rect class="pad" x="879" y="521" width="10" height="10"/>
+        <rect class="pad" x="879" y="545" width="10" height="10"/>
+        <rect class="pad" x="879" y="569" width="10" height="10"/>
+      </svg>
+    </div>
+    <figcaption>Carte vue de dessus, USB en bas. Les signaux partent du haut de J1 (broches 4 à 8), les alimentations des deux bouts (3V3 en 1, 5V0 et GND en 21 et 22). Un point marque une jonction, un pont un croisement sans contact. Dans les SO-45, le circuit interne avec la résistance à ajouter. Ordre des broches du TM1637 et des pastilles du ruban à lire sur la sérigraphie ; couleurs de fil proposées.</figcaption>
+  </figure>
+
+  <section>
+    <h2>Fil par fil</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Fil</th><th>Broche J1</th><th>Vers</th><th>Remarque</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="wire"><span class="sw bg-g4"></span>bleu</span></td>
+            <td class="pin mono"><span class="num">4</span> · <b>GPIO4</b></td>
+            <td>SO-45 A (session), borne +</td>
+            <td class="note">PWM 25 kHz, 1,2 mA au plus</td>
+          </tr>
+          <tr>
+            <td><span class="wire"><span class="sw bg-g5"></span>violet</span></td>
+            <td class="pin mono"><span class="num">5</span> · <b>GPIO5</b></td>
+            <td>SO-45 B (semaine), borne +</td>
+            <td class="note">PWM 25 kHz, 1,2 mA au plus</td>
+          </tr>
+          <tr>
+            <td><span class="wire"><span class="sw bg-clk"></span>vert</span></td>
+            <td class="pin mono"><span class="num">6</span> · <b>GPIO6</b></td>
+            <td>TM1637, CLK</td>
+            <td class="note"></td>
+          </tr>
+          <tr>
+            <td><span class="wire"><span class="sw bg-dio"></span>marron</span></td>
+            <td class="pin mono"><span class="num">7</span> · <b>GPIO7</b></td>
+            <td>TM1637, DIO</td>
+            <td class="note"></td>
+          </tr>
+          <tr>
+            <td><span class="wire"><span class="sw bg-3v3"></span>orange</span></td>
+            <td class="pin mono"><span class="num">1</span> · <b>3V3</b></td>
+            <td>TM1637, VCC</td>
+            <td class="note">en 3,3 V, pas en 5 V (voir plus bas)</td>
+          </tr>
+          <tr>
+            <td><span class="wire"><span class="sw bg-din"></span>jaune</span></td>
+            <td class="pin mono"><span class="num">8</span> · <b>GPIO15</b></td>
+            <td>Ruban, DIN (côté entrée)</td>
+            <td class="note">données en 3,3 V, sans level shifter</td>
+          </tr>
+          <tr>
+            <td><span class="wire"><span class="sw bg-5v"></span>rouge</span></td>
+            <td class="pin mono"><span class="num">21</span> · <b>5V0</b></td>
+            <td>Diode 1N400x, puis ruban +5V</td>
+            <td class="note">anode côté carte, bague côté ruban</td>
+          </tr>
+          <tr>
+            <td><span class="wire"><span class="sw bg-gnd"></span>noir</span></td>
+            <td class="pin mono"><span class="num">22</span> · <b>GND</b></td>
+            <td>Bornes − des deux SO-45, GND du TM1637, GND du ruban</td>
+            <td class="note">masse commune</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Au montage</h2>
+    <div class="notes">
+      <article>
+        <h3>Une 6,2 kΩ dans chaque SO-45</h3>
+        <p>Soudée en parallèle sur <code>R_s</code> seule, jamais sur les bornes du voltmètre. Rien à dessouder. Entre les bornes, on doit lire ≈ 2,78 kΩ (A) et ≈ 2,82 kΩ (B) ; le 100 % imprimé tombe alors vers 2,93 et 2,95 V, sous les 3,3 V du GPIO.</p>
+      </article>
+      <article>
+        <h3>Jauges sans pièce externe</h3>
+        <p>La résistance interne limite le courant à 1,2 mA sous 3,3 V : pas de résistance de protection. Un condensateur aux bornes seulement si l'aiguille tremble à l'essai.</p>
+      </article>
+      <article class="warn">
+        <h3>Jamais de 5 V sur un GPIO</h3>
+        <p>Le 5V0 ne va qu'à la diode du ruban. Le TM1637 reste en 3V3 : son module tire CLK et DIO à son VCC, donc alimenté en 5 V il mettrait 5 V sur GPIO6 et GPIO7.</p>
+      </article>
+      <article>
+        <h3>Ruban piloté en 3,3 V</h3>
+        <p>La 1N400x fait tomber l'alimentation du ruban vers 4,3 V. Le seuil haut du WS2812B (0,7 × VDD ≈ 3,0 V) passe sous les 3,3 V de GPIO15. Montage à valider sur breadboard.</p>
+      </article>
+      <article>
+        <h3>Tout sur J1</h3>
+        <p>Les huit fils partent du connecteur de gauche (USB en bas) : broches 1, 4 à 8, 21 et 22. La carte diymore est un clone : vérifier la sérigraphie avant de souder.</p>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Alimentation 5 V</h2>
+    <div class="table-scroll power">
+      <table>
+        <thead><tr><th>Consommateur</th><th>Courant</th></tr></thead>
+        <tbody>
+          <tr><td>ESP32-S3 en WiFi</td><td>≈ 100 mA, pics ≈ 350 mA</td></tr>
+          <tr><td>Ruban, 4 LED (ambre à 60 %)</td><td>≈ 80 mA, 240 mA en blanc plein</td></tr>
+          <tr><td>TM1637</td><td>quelques dizaines de mA</td></tr>
+          <tr><td>Deux SO-45</td><td>≈ 2 mA</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lede">Moins de 0,7 A au pire : un chargeur USB 5 V / 1 A suffit. Si l'on passe à un module 230 V → 5 V (question ouverte du cahier des charges), il arrive sur 5V0 et GND, à la place du câble USB.</p>
+  </section>
+
+  <footer>Sources : <code>esphome/claudemetre.yaml</code>, <code>esphome/temoin.yaml</code>, <code>docs/cahier-des-charges.md</code>, <code>design/references/so45/README.md</code>. Courants de l'ESP32, du TM1637 et du ruban : ordres de grandeur, pas des mesures.</footer>
+</div>

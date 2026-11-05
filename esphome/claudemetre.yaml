@@ -1,0 +1,370 @@
+# Claudemètre : firmware ESPHome.
+# Lit les capteurs claude_* de Home Assistant (homeassistant/packages/claudemetre.yaml)
+# et les montre sur deux voltmètres SO-45 (PWM), un TM1637 (HH:MM du reset de
+# la session) et le voyant CLAUDE (ruban WS2812B, paquet temoin.yaml).
+# Spécification : docs/cahier-des-charges.md § 3 ; détail : docs/logiciel.md.
+#
+# Carte : diymore ESP32-S3-DevKitC-1 N16R8 (16 Mo de flash ; PSRAM octale
+# inutilisée, mais GPIO33-37 pris). Broches, à la suite sur le connecteur
+# de gauche :
+#   GPIO4   jauge session : + du SO-45 A (− à GND)
+#   GPIO5   jauge semaine : + du SO-45 B (− à GND)
+#   GPIO6   TM1637 CLK (VCC en 3V3)
+#   GPIO7   TM1637 DIO
+#   GPIO15  DIN du ruban du voyant (voir temoin.yaml)
+#
+# Valider et compiler avec le skill esphome (esph.sh config / compile).
+
+esphome:
+  name: claudemetre
+  friendly_name: Claudemètre
+  on_boot:
+    priority: -100
+    then:
+      - script.execute: boot_test
+
+esp32:
+  board: esp32-s3-devkitc-1
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+
+logger:
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    encryption: {}
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+packages:
+  lamp: !include
+    file: temoin.yaml
+    vars:
+      id: lamp
+      name: Voyant
+      pin: GPIO15
+      led_count: 4 # ruban à 144 LED/m derrière la fenêtre de 32 mm
+
+time:
+  - platform: homeassistant
+    id: ha_time
+    timezone: Europe/Paris
+
+# Données de Home Assistant. Usage inconnu = NaN (ce n'est pas 0 %).
+sensor:
+  - platform: homeassistant
+    id: session_used
+    entity_id: sensor.claude_usage_session
+  - platform: homeassistant
+    id: week_used
+    entity_id: sensor.claude_usage_semaine
+
+# Heures de reset en epoch, lues comme texte (un float 32 bits ne garde un
+# epoch qu'à 128 s près) ; « None » ou vide = inconnue.
+text_sensor:
+  - platform: homeassistant
+    id: session_resets_at
+    entity_id: sensor.claude_reset_session
+    attribute: epoch
+  - platform: homeassistant
+    id: week_resets_at
+    entity_id: sensor.claude_reset_semaine
+    attribute: epoch
+
+binary_sensor:
+  - platform: homeassistant
+    id: claude_active
+    entity_id: binary_sensor.claude_actif
+    on_state:
+      - script.execute: lamp_update
+  - platform: homeassistant
+    id: claude_attention
+    entity_id: binary_sensor.claude_needattention
+    on_state:
+      - script.execute: lamp_update
+
+globals:
+  # % imposé à chaque jauge (test du démarrage, réglage) ; négatif = suivre HA.
+  - id: session_forced
+    type: float
+    initial_value: "-1"
+  - id: week_forced
+    type: float
+    initial_value: "-1"
+  # Rapport cyclique actuel de chaque jauge (0-1), qui glisse vers sa cible.
+  - id: session_duty
+    type: float
+    initial_value: "0"
+  - id: week_duty
+    type: float
+    initial_value: "0"
+  - id: boot_testing
+    type: bool
+    initial_value: "true"
+
+# PWM au-dessus de l'audible : le cadre mobile en fait la moyenne.
+output:
+  - platform: ledc
+    id: session_pwm
+    pin: GPIO4
+    frequency: 25kHz
+  - platform: ledc
+    id: week_pwm
+    pin: GPIO5
+    frequency: 25kHz
+
+# Étalonnage : rapport cyclique (%) qui met l'aiguille sur 0, 25, 50, 75 et
+# 100 % du cadran, interpolé entre ces points. Valeurs de départ : droite
+# jusqu'à 89 % (100 % imprimé vers 2,94 V avec la 6,2 kΩ, sur 3,3 V). Le 0 %
+# est un petit rapport cyclique : au repos, l'aiguille est un peu sous le 0 %
+# imprimé (vis du zéro). Changer un point amène la jauge dessus pendant 20 s,
+# pour le régler à l'œil.
+.cal: &cal
+  platform: template
+  icon: mdi:tune-vertical
+  entity_category: config
+  unit_of_measurement: "%"
+  mode: box
+  min_value: 0
+  max_value: 100
+  step: 0.1
+  optimistic: true
+  restore_value: true
+
+number:
+  - <<: *cal
+    id: session_cal_0
+    name: Jauge session 0 %
+    initial_value: 0
+    set_action:
+      - lambda: id(session_forced) = 0;
+      - script.execute: session_preview
+  - <<: *cal
+    id: session_cal_25
+    name: Jauge session 25 %
+    initial_value: 22.3
+    set_action:
+      - lambda: id(session_forced) = 25;
+      - script.execute: session_preview
+  - <<: *cal
+    id: session_cal_50
+    name: Jauge session 50 %
+    initial_value: 44.5
+    set_action:
+      - lambda: id(session_forced) = 50;
+      - script.execute: session_preview
+  - <<: *cal
+    id: session_cal_75
+    name: Jauge session 75 %
+    initial_value: 66.8
+    set_action:
+      - lambda: id(session_forced) = 75;
+      - script.execute: session_preview
+  - <<: *cal
+    id: session_cal_100
+    name: Jauge session 100 %
+    initial_value: 89
+    set_action:
+      - lambda: id(session_forced) = 100;
+      - script.execute: session_preview
+  - <<: *cal
+    id: week_cal_0
+    name: Jauge semaine 0 %
+    initial_value: 0
+    set_action:
+      - lambda: id(week_forced) = 0;
+      - script.execute: week_preview
+  - <<: *cal
+    id: week_cal_25
+    name: Jauge semaine 25 %
+    initial_value: 22.3
+    set_action:
+      - lambda: id(week_forced) = 25;
+      - script.execute: week_preview
+  - <<: *cal
+    id: week_cal_50
+    name: Jauge semaine 50 %
+    initial_value: 44.5
+    set_action:
+      - lambda: id(week_forced) = 50;
+      - script.execute: week_preview
+  - <<: *cal
+    id: week_cal_75
+    name: Jauge semaine 75 %
+    initial_value: 66.8
+    set_action:
+      - lambda: id(week_forced) = 75;
+      - script.execute: week_preview
+  - <<: *cal
+    id: week_cal_100
+    name: Jauge semaine 100 %
+    initial_value: 89
+    set_action:
+      - lambda: id(week_forced) = 100;
+      - script.execute: week_preview
+
+  - platform: template
+    id: display_brightness
+    name: Afficheur luminosité
+    icon: mdi:brightness-6
+    entity_category: config
+    mode: slider
+    min_value: 0
+    max_value: 7
+    step: 1
+    initial_value: 4
+    optimistic: true
+    restore_value: true
+
+interval:
+  - interval: 20ms
+    then:
+      - lambda: |-
+          // Cible de chaque jauge, en rapport cyclique (0-1) :
+          // - % imposé (test du démarrage, réglage) ;
+          // - usage inconnu : 0, aiguille au repos sous le 0 % imprimé ;
+          // - heure de reset passée : 0 %, sans attendre le PC ;
+          // - sinon l'usage, par la table d'étalonnage.
+          const auto now = id(ha_time).now();
+          auto target = [&](float forced, float used, const std::string &resets_at, const float cal[5]) -> float {
+            float pct = forced;
+            if (pct < 0) {
+              if (std::isnan(used))
+                return 0.0f;
+              const time_t reset = atoll(resets_at.c_str());
+              pct = (now.is_valid() && reset > 0 && now.timestamp >= reset) ? 0.0f : used;
+            }
+            pct = std::clamp(pct, 0.0f, 100.0f);
+            const int k = std::min(int(pct / 25), 3);
+            const float f = (pct - 25 * k) / 25;
+            return (cal[k] + f * (cal[k + 1] - cal[k])) / 100;
+          };
+          // Glissement à vitesse limitée, pour un rendu mécanique : pleine
+          // échelle en ≈ 2,5 s.
+          auto glide = [](float &duty, float target, output::FloatOutput *out) {
+            const float step = 0.4f * 0.020f;
+            if (duty == target)
+              return;
+            duty = fabsf(target - duty) <= step ? target : duty + (target > duty ? step : -step);
+            out->set_level(duty);
+          };
+          const float session_cal[5] = {id(session_cal_0).state, id(session_cal_25).state, id(session_cal_50).state,
+                                        id(session_cal_75).state, id(session_cal_100).state};
+          const float week_cal[5] = {id(week_cal_0).state, id(week_cal_25).state, id(week_cal_50).state,
+                                     id(week_cal_75).state, id(week_cal_100).state};
+          glide(id(session_duty),
+                target(id(session_forced), id(session_used).state, id(session_resets_at).state, session_cal),
+                id(session_pwm));
+          glide(id(week_duty), target(id(week_forced), id(week_used).state, id(week_resets_at).state, week_cal),
+                id(week_pwm));
+
+# HH:MM du reset de la session, deux-points qui clignote ; --:-- si l'heure
+# est inconnue ou passée. Le point du 2e chiffre allume le deux-points.
+display:
+  - platform: tm1637
+    id: tm_display
+    clk_pin: GPIO6
+    dio_pin: GPIO7
+    length: 4
+    update_interval: 500ms
+    lambda: |-
+      it.set_intensity(uint8_t(id(display_brightness).state));
+      if (id(boot_testing)) {
+        it.print("88.88");
+        return;
+      }
+      const auto now = id(ha_time).now();
+      const time_t reset = atoll(id(session_resets_at).state.c_str());
+      if (!now.is_valid() || reset <= now.timestamp) {
+        it.print("--.--");
+        return;
+      }
+      if (millis() % 1000 < 500)
+        it.strftime("%H.%M", ESPTime::from_epoch_local(reset));
+      else
+        it.strftime("%H%M", ESPTime::from_epoch_local(reset));
+
+script:
+  # Démarrage : aiguilles 0 → 100 → 0 %, afficheur 88:88, voyant ambre puis
+  # rouge ; ensuite tout suit Home Assistant (--:-- jusqu'aux premières données).
+  - id: boot_test
+    then:
+      - lambda: |-
+          id(boot_testing) = true;
+          id(session_forced) = 100;
+          id(week_forced) = 100;
+      - light.turn_on:
+          id: lamp
+          red: 100%
+          green: 56%
+          blue: 12%
+          effect: Fixe
+      - delay: 3s
+      - lambda: |-
+          id(session_forced) = 0;
+          id(week_forced) = 0;
+      - light.turn_on:
+          id: lamp
+          red: 100%
+          green: 16%
+          blue: 8%
+          effect: Fixe
+      - delay: 3s
+      - lambda: |-
+          id(boot_testing) = false;
+          id(session_forced) = -1;
+          id(week_forced) = -1;
+      - script.execute: lamp_update
+
+  # Fin du réglage d'un point d'étalonnage : la jauge revient aux données.
+  - id: session_preview
+    mode: restart
+    then:
+      - delay: 20s
+      - lambda: id(session_forced) = -1;
+  - id: week_preview
+    mode: restart
+    then:
+      - delay: 20s
+      - lambda: id(week_forced) = -1;
+
+  # Voyant : rouge qui clignote si un agent attend une réponse (prioritaire),
+  # ambre qui respire si au moins un agent travaille, éteint sinon. Couleurs
+  # de la carte Lovelace.
+  - id: lamp_update
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: return !id(boot_testing);
+          then:
+            - if:
+                condition:
+                  binary_sensor.is_on: claude_attention
+                then:
+                  - light.turn_on:
+                      id: lamp
+                      red: 100%
+                      green: 16%
+                      blue: 8%
+                      effect: Clignotement
+                else:
+                  - if:
+                      condition:
+                        binary_sensor.is_on: claude_active
+                      then:
+                        - light.turn_on:
+                            id: lamp
+                            red: 100%
+                            green: 56%
+                            blue: 12%
+                            effect: Respiration
+                      else:
+                        - light.turn_off: lamp

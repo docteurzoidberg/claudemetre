@@ -1,0 +1,27 @@
+# Caches Python et pytest
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# Blender : copies de sauvegarde, images de la vidéo du voyant (le MP4 est dans design/renders/)
+*.blend1
+design/renders/anim/
+
+# Réglages locaux de Claude Code
+.claude/settings.local.json
+
+# ESPHome : build et secrets (voir aussi esphome/.gitignore)
+esphome/.esphome/
+esphome/secrets.yaml
+secrets.yaml
+design/fusion/web/
+
+# Liste des artefacts privés : reste en local
+ARTEFACTS.md
+
+# Chemins et adresses propres au poste : restent en local
+prive.env
+
+# Sauvegarde de l'ancien historique Git
+.git_historique/

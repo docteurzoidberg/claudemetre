@@ -1,0 +1,106 @@
+# Claudemètre : usage du forfait Claude, poussé depuis WSL par webhook.
+# Détail : docs/logiciel.md
+#
+# Installation :
+#   1. configuration.yaml, sous la clé « homeassistant: » (la créer si absente) :
+#        homeassistant:
+#          packages: !include_dir_named packages
+#   2. copier ce fichier dans <config>/packages/claudemetre.yaml
+#   3. secrets.yaml :
+#        claudemetre_webhook_id: <CLAUDEMETRE_WEBHOOK_ID de ~/.config/claudemetre/env côté WSL>
+#        claudemetre_activity_webhook_id: <CLAUDEMETRE_ACTIVITY_WEBHOOK_ID, idem>
+#   4. Outils de développement > YAML > Vérifier la configuration, puis redémarrer
+#      (ou recharger « Entités de modèle » pour une simple mise à jour).
+#
+# Corps attendu (une fenêtre nulle ou absente = inconnue ; resets_at nul =
+# fenêtre pas commencée) :
+#   {"five_hour": {"used_percentage": 24, "resets_at": 1793197800},
+#    "seven_day": {"used_percentage": 12, "resets_at": 1793746800},
+#    "measured_at": 1793183889, "source": "oauth"}
+# Chaque envoi porte l'état complet lu sur l'endpoint d'usage : les capteurs ne
+# gardent pas de valeur d'un envoi à l'autre.
+#
+# L'attribut « epoch » des capteurs de reset sert à ESPHome : il le lit comme
+# texte (un float 32 bits ne garde l'epoch qu'à 128 s près).
+
+template:
+  - triggers:
+      - trigger: webhook
+        webhook_id: !secret claudemetre_webhook_id
+        allowed_methods:
+          - POST
+        local_only: true
+    sensor:
+      - name: Claude usage session
+        unique_id: claudemetre_session_used
+        icon: mdi:gauge
+        unit_of_measurement: "%"
+        state_class: measurement
+        state: "{{ (trigger.json.get('five_hour') or {}).get('used_percentage') }}"
+
+      - name: Claude usage semaine
+        unique_id: claudemetre_week_used
+        icon: mdi:gauge
+        unit_of_measurement: "%"
+        state_class: measurement
+        state: "{{ (trigger.json.get('seven_day') or {}).get('used_percentage') }}"
+
+      - name: Claude reset session
+        unique_id: claudemetre_session_resets_at
+        icon: mdi:timer-refresh-outline
+        device_class: timestamp
+        state: >-
+          {% set t = (trigger.json.get('five_hour') or {}).get('resets_at') %}
+          {{ t | timestamp_custom('%Y-%m-%dT%H:%M:%S+00:00', false) if t is number else none }}
+        attributes:
+          epoch: "{{ (trigger.json.get('five_hour') or {}).get('resets_at') }}"
+
+      - name: Claude reset semaine
+        unique_id: claudemetre_week_resets_at
+        icon: mdi:timer-refresh-outline
+        device_class: timestamp
+        state: >-
+          {% set t = (trigger.json.get('seven_day') or {}).get('resets_at') %}
+          {{ t | timestamp_custom('%Y-%m-%dT%H:%M:%S+00:00', false) if t is number else none }}
+        attributes:
+          epoch: "{{ (trigger.json.get('seven_day') or {}).get('resets_at') }}"
+
+      - name: Claude dernière mesure
+        unique_id: claudemetre_measured_at
+        icon: mdi:clock-check-outline
+        device_class: timestamp
+        state: >-
+          {% set t = trigger.json.get('measured_at') %}
+          {{ (t if t is number else as_timestamp(now())) | timestamp_custom('%Y-%m-%dT%H:%M:%S+00:00', false) }}
+
+  # Activité, poussée par host/claudemetre_activity.py à chaque changement et
+  # toutes les 60 s tant qu'un compteur est non nul :
+  #   {"active": 2, "attention": 1, "updated_at": 1793183889, "source": "hooks"}
+  # active : agents au travail ; attention : agents qui attendent une réponse
+  # (permission, question). Sans nouvelles pendant 3 min (PC éteint, WSL
+  # arrêté), auto_off éteint les deux capteurs.
+  - triggers:
+      - trigger: webhook
+        webhook_id: !secret claudemetre_activity_webhook_id
+        allowed_methods:
+          - POST
+        local_only: true
+    binary_sensor:
+      - name: Claude actif
+        unique_id: claudemetre_active
+        icon: mdi:head-cog-outline
+        device_class: running
+        auto_off:
+          minutes: 3
+        state: "{{ trigger.json.get('active', 0) | int(0) > 0 }}"
+        attributes:
+          agents: "{{ trigger.json.get('active', 0) | int(0) }}"
+
+      - name: Claude needattention
+        unique_id: claudemetre_need_attention
+        icon: mdi:bell-ring-outline
+        auto_off:
+          minutes: 3
+        state: "{{ trigger.json.get('attention', 0) | int(0) > 0 }}"
+        attributes:
+          demandes: "{{ trigger.json.get('attention', 0) | int(0) }}"

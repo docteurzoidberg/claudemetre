@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "legend": {
+    "text": "CLAUDE",
+    "background": "#111111"
+  },
+  "window": {
+    "width": 32,
+    "height": 11
+  },
+  "frame": {
+    "width": 52,
+    "height": 18,
+    "color": "#4b5320"
+  },
+  "panel": {
+    "thickness": 3
+  },
+  "mount": {
+    "head": "countersunk"
+  },
+  "light": {
+    "wireExit": "left"
+  }
+}

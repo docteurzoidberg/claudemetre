@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Claudemètre éclaté</title>
+<meta name="description" content="Maquette 3D du Claudemètre, assemblé ou éclaté : deux jauges analogiques et un afficheur pour suivre l'usage du forfait Claude.">
+<meta name="theme-color" content="#141311">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600&family=Barlow:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div class="plaquette"><span class="vis"></span><h1>CLAUDEMÈTRE</h1><span class="vis"></span></div>
+    <p class="chapeau">Deux voltmètres et un afficheur pour suivre l'usage du forfait Claude, pilotés par un ESP32 en WiFi.</p>
+  </header>
+
+  <main class="banc">
+    <section class="scene" id="scene" aria-label="Maquette 3D : glisser pour tourner, molette ou pincement pour zoomer">
+      <canvas id="vue"></canvas>
+      <p class="attente" id="attente" role="status">Chargement du modèle…</p>
+      <div class="fiche" id="fiche" aria-live="polite">
+        <b id="fiche-nom">Maquette</b>
+        <span id="fiche-detail">Glisser pour tourner, molette pour zoomer. Survoler une pièce pour la nommer.</span>
+      </div>
+    </section>
+
+    <aside class="rack" aria-label="Commandes de la maquette">
+      <fieldset>
+        <legend>OUVERTURE</legend>
+        <div class="touches">
+          <button class="touche" type="button" id="assemble" aria-pressed="false">Assemblé</button>
+          <button class="touche" type="button" id="eclate" aria-pressed="false">Éclaté</button>
+        </div>
+        <input type="range" id="ouverture" min="0" max="100" value="0" aria-label="Ouverture de l'éclaté, en pour cent">
+      </fieldset>
+
+      <fieldset>
+        <legend>VUE</legend>
+        <div class="touches deux" id="vues">
+          <button class="touche" type="button" data-vue="iso" aria-pressed="true">Trois quarts</button>
+          <button class="touche" type="button" data-vue="face" aria-pressed="false">Face</button>
+          <button class="touche" type="button" data-vue="cote" aria-pressed="false">Côté</button>
+          <button class="touche" type="button" data-vue="dos" aria-pressed="false">Dos</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>VOYANT</legend>
+        <div class="touches" id="voyants">
+          <button class="touche" type="button" data-voyant="eteint" aria-pressed="false">Éteint</button>
+          <button class="touche ambre" type="button" data-voyant="ambre" aria-pressed="true">Ambre</button>
+          <button class="touche rouge" type="button" data-voyant="rouge" aria-pressed="false">Rouge</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>PIÈCES</legend>
+        <div class="liste" id="liste"></div>
+      </fieldset>
+
+      <p class="note">Boîtier de 200 × 96 × 40 mm, d'après le design Fusion <span id="version">claudometre</span>.</p>
+    </aside>
+  </main>
+</div>
+<script type="module" src="main.js"></script>
+</body>
+</html>

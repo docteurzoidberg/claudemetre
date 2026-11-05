@@ -1,0 +1,97 @@
+/* Banc d'instrument : scène à gauche, rack des commandes à droite. Un seul thème, celui de la platine noire. */
+:root {
+  color-scheme: dark;
+  --platine: #141311;
+  --plaque: #1e1d19;
+  --enfonce: #2a2822;
+  --trait: #38362e;
+  --blanc: #eceae2;      /* PLA blanc des plaquettes */
+  --gris: #aaa698;
+  --segment: #ffba18;    /* segments du TM1637 */
+  --ambre: #ff8f1f;      /* firmware : 100 / 56 / 12 % */
+  --rouge: #ff4a33;      /* firmware : 100 / 16 / 8 %, éclairci pour le texte */
+  --titre: "Barlow Semi Condensed", "Arial Narrow", sans-serif;
+  --texte: "Barlow", "Segoe UI", system-ui, sans-serif;
+}
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--platine); color: var(--blanc); font: 15px/1.4 var(--texte); }
+
+.page {
+  height: 100vh; height: 100dvh; max-width: 1680px; margin: 0 auto;
+  display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 12px;
+  padding-block: 12px 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; }
+.plaquette {
+  display: flex; align-items: center; gap: 14px; padding: 8px 12px; background: var(--plaque);
+  border: 1px solid var(--trait); border-radius: 5px;
+}
+.vis { width: 13px; height: 13px; border-radius: 50%; flex: none; background: radial-gradient(circle, #000 0 30%, #2c2b27 34% 100%); }
+h1 { font: 500 clamp(20px, 2.4vw, 26px)/1 var(--titre); letter-spacing: .14em; margin: 0; }
+.chapeau { margin: 0; color: var(--gris); max-width: 70ch; }
+
+.banc { display: grid; grid-template-columns: minmax(0, 1fr) 268px; gap: 14px; min-height: 0; }
+
+.scene {
+  position: relative; min-height: 0; overflow: hidden; border: 1px solid var(--trait); border-radius: 4px;
+  background: radial-gradient(110% 90% at 50% 40%, #5a574a 0, #424036 58%, #2f2d26 100%);
+}
+#vue { position: absolute; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+#vue:active { cursor: grabbing; }
+.attente {
+  position: absolute; inset: 0; margin: 0; display: grid; place-items: center; padding: 16px; text-align: center;
+  font: 500 16px/1.4 var(--titre); letter-spacing: .08em; color: var(--gris);
+}
+.fiche {
+  position: absolute; left: 10px; bottom: 10px; max-width: min(46ch, calc(100% - 20px)); padding: 7px 11px 8px;
+  display: grid; gap: 1px; pointer-events: none; font-size: 14px; line-height: 1.35;
+  background: rgba(20, 19, 17, .86); border: 1px solid var(--trait); border-radius: 3px;
+}
+.fiche b { font: 600 15px/1.2 var(--titre); letter-spacing: .08em; color: var(--segment); }
+.fiche span { color: var(--blanc); }
+
+.rack { display: grid; align-content: start; gap: 12px; min-height: 0; overflow-y: auto; scrollbar-width: thin; padding-right: 2px; }
+fieldset { min-width: 0; margin: 0; padding: 0; border: 0; display: grid; gap: 6px; }
+legend { padding: 0 0 5px; font: 500 12px/1 var(--titre); letter-spacing: .14em; color: var(--gris); }
+
+.touches { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 2px; }
+.touches.deux { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.touche {
+  --allume: var(--segment);
+  min-width: 0; min-height: 36px; padding: 6px; cursor: pointer; background: var(--plaque); color: var(--gris); border: 0;
+  border-top: 3px solid var(--trait); font: 500 15px/1.2 var(--titre); letter-spacing: .04em;
+}
+.touche.ambre { --allume: var(--ambre); }
+.touche.rouge { --allume: var(--rouge); }
+.touche:hover { color: var(--blanc); }
+.touche[aria-pressed="true"] { background: var(--enfonce); color: var(--blanc); border-top-color: var(--allume); }
+:is(.touche, .piece input, #ouverture):focus-visible { outline: 2px solid var(--segment); outline-offset: 1px; }
+
+#ouverture { width: 100%; height: 24px; margin: 0; accent-color: var(--segment); cursor: pointer; }
+
+.liste { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px 4px; }
+.piece {
+  display: grid; grid-template-columns: 16px minmax(0, 1fr); align-items: center; gap: 8px; min-height: 28px; padding: 2px 6px;
+  cursor: pointer; border-radius: 2px; font: 500 15px/1.2 var(--titre); letter-spacing: .03em; color: var(--gris);
+}
+.piece input { width: 15px; height: 15px; margin: 0; accent-color: var(--segment); cursor: pointer; }
+.piece:has(input:checked) { color: var(--blanc); }
+.piece:hover, .piece.marque { background: var(--enfonce); }
+.piece.visserie { grid-column: 1 / -1; margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--trait); border-radius: 0; }
+
+.note { margin: 0; color: var(--gris); font-size: 13px; }
+
+@media (max-width: 860px) {
+  .page { height: auto; }
+  .banc { grid-template-columns: minmax(0, 1fr); }
+  .scene { height: 62vh; height: 62dvh; min-height: 320px; }
+  .rack { overflow: visible; padding-right: 0; }
+  .liste { gap: 2px 8px; }
+  .piece { min-height: 40px; }
+  .touche { min-height: 44px; }
+}

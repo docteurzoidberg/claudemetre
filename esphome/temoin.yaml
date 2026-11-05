@@ -1,0 +1,87 @@
+# Témoin lumineux : ruban WS2812B derrière une légende, en paquet ESPHome.
+# Générique (rien de propre au claudemètre) : il doit pouvoir servir aux
+# autres témoins du générateur ~/3d/generateur-temoin-lumineux. Les effets
+# reprennent le vocabulaire de son aperçu : Fixe, Respiration, Clignotement,
+# Balayage. La logique des états (quelle entité donne quelle couleur et quel
+# effet) reste dans l'appareil qui inclut le paquet.
+#
+# Utilisation :
+#   packages:
+#     lamp: !include
+#       file: temoin.yaml
+#       vars:
+#         id: lamp           # lumière « lamp », réglage « lamp_brightness »
+#         name: Voyant
+#         pin: GPIO15
+#         led_count: 4
+# puis, selon les états :
+#   - light.turn_on: {id: lamp, red: 100%, green: 56%, blue: 12%, effect: Respiration}
+#   - light.turn_off: lamp
+#
+# Tous les états passent par un effet, même la couleur fixe : chaque effet
+# applique le réglage « <name> luminosité », qui agit donc tout de suite, quel
+# que soit l'état. La lumière reste interne : Home Assistant n'y touche pas.
+#
+# Câblage (3,3 V sur DIN sans level shifter) : 5 V du ruban par une diode
+# 1N400x, pour descendre son seuil haut sous 3,3 V ; à valider sur breadboard.
+
+light:
+  - platform: esp32_rmt_led_strip
+    id: ${id}
+    name: ${name}
+    internal: false
+    pin: ${pin}
+    num_leds: ${led_count}
+    chipset: WS2812
+    channel_colors: GRB
+    restore_mode: ALWAYS_OFF
+    effects:
+      - addressable_lambda:
+          name: Fixe
+          update_interval: 100ms
+          lambda: |-
+            const float level = id(${id}_brightness).state / 100.0f;
+            it.all() = current_color * uint8_t(level * 255);
+      # 100 % → 35 % → 100 % en 3,2 s, comme la carte Lovelace.
+      - addressable_lambda:
+          name: Respiration
+          update_interval: 20ms
+          lambda: |-
+            const float level = id(${id}_brightness).state / 100.0f;
+            const float phase = (millis() % 3200) / 3200.0f;
+            const float k = 0.675f + 0.325f * cosf(2 * M_PI * phase);
+            it.all() = current_color * uint8_t(level * k * 255);
+      # Allumé 0,5 s par seconde.
+      - addressable_lambda:
+          name: Clignotement
+          update_interval: 50ms
+          lambda: |-
+            const float level = id(${id}_brightness).state / 100.0f;
+            it.all() = (millis() % 1000 < 500) ? current_color * uint8_t(level * 255) : Color::BLACK;
+      # Un point lumineux fait l'aller-retour sur le ruban en 2,4 s.
+      - addressable_lambda:
+          name: Balayage
+          update_interval: 20ms
+          lambda: |-
+            const float level = id(${id}_brightness).state / 100.0f;
+            const float phase = (millis() % 2400) / 2400.0f;
+            const float x = (it.size() - 1) * (0.5f - 0.5f * cosf(2 * M_PI * phase));
+            for (int i = 0; i < it.size(); i++) {
+              const float k = std::max(0.15f, 1.0f - fabsf(i - x));
+              it[i] = current_color * uint8_t(level * k * 255);
+            }
+
+number:
+  - platform: template
+    id: ${id}_brightness
+    name: ${name} luminosité
+    icon: mdi:brightness-6
+    entity_category: config
+    unit_of_measurement: "%"
+    mode: slider
+    min_value: 5
+    max_value: 100
+    step: 5
+    initial_value: 60
+    optimistic: true
+    restore_value: true
