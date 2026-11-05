@@ -91,7 +91,7 @@ design/     maquettes et gabarits
   plaquettes/plaquettes_texte.py   textes des plaquettes (DXF pour Fusion) : `uv run plaquettes_texte.py`
   fusion/scripts/                  scripts de construction du design Fusion (exécutés par MCP, voir README)
   fusion/print/                    3MF des cadrans à imprimer, une pièce par couleur (`uv run cadran_3mf.py`, skill `cadrans-3mf`) ;
-                                   coque, patron de perçage, plaquettes, visière, plaques de flanc et clips (`uv run coque_3mf.py`, `patron_3mf.py`, `plaquettes_3mf.py`,
+                                   coque, platine, patron de perçage, plaquettes, visière, plaques de flanc et clips (`uv run coque_3mf.py`, `platine_3mf.py`, `patron_3mf.py`, `plaquettes_3mf.py`,
                                    `visiere_3mf.py`, `plaques_3mf.py`, `clips_3mf.py`)
   cablage/index.html               schéma de câblage (artifact privé, republier sur la même URL)
   temoin/                          preset du témoin CLAUDE (claude.json) et export/ du générateur

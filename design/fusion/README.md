@@ -71,6 +71,7 @@ Tous dans `print/`. Après une modification : `scripts/export_<pièce>.py` dans 
 | `coque.3mf` | PETG kaki (filament 4), supports en PETG noir (filament 3) | dos au plateau, supports en arbre | 4 h 23, 122 g |
 | `plaquettes.3mf` | PLA (gabarit `u1-4pla`), noir (filament 4) et blanc (filament 1) | face visible sur le plateau | 11 min, 2,2 g de noir, 0,4 g de blanc |
 | `visiere.3mf` | PETG kaki (gabarit `u1-petg`, filament 4, couleur de la coque enregistrée dans Orca) | debout sur son chant arrière, sans support ni bordure | 14 min, 2,8 g |
+| `platine.3mf` | PETG noir (filament 3) | face avant sur le plateau, sans support | 1 h 07, 32 g |
 | `plaque_flanc.3mf` | PETG noir (filament 3) | face d'appui sur le plateau, sans support | 13 min, 7,2 g |
 | `plaque_bossage.3mf` | PETG kaki (filament 4) | face d'appui sur le plateau | 33 min, 11 g |
 | `clips.3mf` | PETG noir (filament 3) | les trois à la fois, sur le flanc, sans support | 21 min, 8,8 g |

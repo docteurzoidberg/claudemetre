@@ -78,10 +78,6 @@ Le détail est dans [docs/logiciel.md](docs/logiciel.md) et [docs/source-donnees
 [`design/temoin/export/`](design/temoin/export/). Tout est en PETG, sauf les plaquettes en PLA noir et blanc. Les
 cadrans sont multi-filament.
 
-> [!WARNING]
-> La platine avant n'a pas encore de fichier d'impression dans ce dépôt, seulement son script de construction
-> Fusion : [`design/fusion/scripts/platine.py`](design/fusion/scripts/platine.py).
-
 **2. Préparer les voltmètres.** Une GPIO en 3,3 V n'amène un 0-5 V qu'aux deux tiers de sa course. On ramène la
 pleine échelle vers 3 V en soudant une 6,2 kΩ en parallèle sur la résistance série interne. Les cadrans imprimés
 remplacent ensuite la plaque d'origine. Mesures et calculs dans

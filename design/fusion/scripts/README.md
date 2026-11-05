@@ -55,6 +55,7 @@ def run(ctx):
 | `export_patron.py` | **export, relançable** : STL et `patron.json` pour `../patron_3mf.py` (3MF à imprimer) |
 | `export_coque.py` | **export, relançable** : STL et `coque.json` pour `../coque_3mf.py` (3MF à imprimer) |
 | `export_plaquettes.py` | **export, relançable** : un STL par corps et `export.json` pour `../plaquettes_3mf.py` (3MF à imprimer) |
+| `export_platine.py` | **export, relançable** : STL et `platine.json` pour `../platine_3mf.py` (3MF à imprimer) |
 | `export_visiere.py` | **export, relançable** : STL et `visiere.json` pour `../visiere_3mf.py` (3MF à imprimer) |
 | `export_plaques.py` | **export, relançable** : STL de `plaque_flanc` et `plaque_bossage`, en repère du composant, et `plaques.json` pour `../plaques_3mf.py` (3MF à imprimer) |
 | `export_clips.py` | **export, relançable** : STL des trois clips, en repère du composant, et `clips.json` pour `../clips_3mf.py` (3MF à imprimer) |
