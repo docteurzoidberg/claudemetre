@@ -185,8 +185,8 @@ Fenêtre absente = valeur inconnue, ce n'est **pas** 0 %.
 
 - Heure : `time: homeassistant`, fuseau `Europe/Paris`.
 - Démarrage : aiguilles à 100 % puis à 0 %, voyant ambre puis rouge. Sur l'afficheur,
-  un trait fait le tour et s'allonge jusqu'à `88.88`, puis `--.--` jusqu'aux premières
-  données.
+  un trait fait le tour et s'allonge jusqu'à fermer le pourtour, puis `--.--` jusqu'aux
+  premières données.
 - Aiguilles qui glissent vers la nouvelle valeur (pleine échelle en ≈ 2,5 s), pour
   un rendu mécanique.
 - Usage inconnu : aiguille au repos.

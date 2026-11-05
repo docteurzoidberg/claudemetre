@@ -341,17 +341,14 @@ display:
     lambda: |-
       it.set_intensity(uint8_t(id(display_brightness).state));
       if (id(boot_testing)) {
-        // Tour de piste : un trait fait le tour et s'allonge, puis tout s'allume.
+        // Tour de piste : un trait fait le tour et s'allonge jusqu'à fermer le
+        // pourtour à la fin du test.
         const uint32_t t = millis() - id(boot_start);
-        if (t >= 5200) {
-          it.print("88.88");
-          return;
-        }
         // Pourtour : chiffre, segment (1 = a, 2 = b, 4 = c, 8 = d, 16 = e, 32 = f).
         static const uint8_t ring[12][2] = {{0, 1}, {1, 1}, {2, 1}, {3, 1}, {3, 2},  {3, 4},
                                             {3, 8}, {2, 8}, {1, 8}, {0, 8}, {0, 16}, {0, 32}};
         uint8_t segments[4] = {0, 0, 0, 0};
-        const int head = t / 80, length = std::min(12, 3 + int(t / 520));
+        const int head = t / 80, length = std::min(12, 3 + int(t / 650));
         for (int i = 0; i < length; i++) {
           const uint8_t *step = ring[(head - i + 12) % 12];
           segments[step[0]] |= step[1];
@@ -417,6 +414,7 @@ script:
           id(boot_testing) = false;
           id(session_forced) = -1;
           id(week_forced) = -1;
+      - component.update: tm_display
       - script.execute: lamp_update
 
   # Fin du réglage d'un point d'étalonnage : la jauge revient aux données.
