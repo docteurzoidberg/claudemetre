@@ -12,11 +12,11 @@ def rapport():
     assert app.activeDocument.name.startswith('claudometre'), app.activeDocument.name
     root = d.rootComponent
     occs = {o.name: o for o in root.occurrences}
-    lp = [o for o in root.occurrences if o.component.name.startswith('connecteur_LP-16') and o.isLightBulbOn][0]
     plaque = [o for o in root.occurrences if o.component.name == 'plaque_bossage'][0]
+    lp = [o for o in plaque.childOccurrences if o.component.name.startswith('connecteur_LP-16') and o.isLightBulbOn][0]
     kaki = [b for b in plaque.bRepBodies if b.name == 'plaque_bossage'][0]
     coque = occs['coque:1'].bRepBodies.item(0)
-    vis = [s for s in occs['visserie:1'].childOccurrences
+    vis = [s for s in list(occs['visserie:1'].childOccurrences) + list(plaque.childOccurrences)
            if s.component.name in ('vis_CHC_M3x6', 'vis_FHC_M3x12') and s.transform2.translation.x > 9]
     so45 = list(occs['voltmetre_SO-45:1'].bRepBodies)
     out = []
@@ -87,7 +87,8 @@ def essai_usbc(ctx):
     exec(compile(open(p, encoding='utf-8').read(), p, 'exec'), ns)
     d = adsk.fusion.Design.cast(app.activeProduct)
     root = d.rootComponent
-    deux = [o for o in root.occurrences if o.component.name == 'connecteur_LP-16_2poles'][0]
+    plaque = [o for o in root.occurrences if o.component.name == 'plaque_bossage'][0]
+    deux = [o for o in plaque.childOccurrences if o.component.name == 'connecteur_LP-16_2poles'][0]
     deux.isLightBulbOn = False
     ns['pose_connecteur'](ctx, 'connecteur_LP-16_USB-C')
     raise RuntimeError('ESSAI ANNULÉ\n' + rapport())

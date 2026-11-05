@@ -11,13 +11,15 @@ ce qui est derrière la face (circuit, broches). Corps masqués et occurrences �
 de l'afficheur sort face par face : un corps par segment, pour pouvoir les allumer un à un.
 
 `complet(ctx)` écrit la même chose avec tout l'intérieur, en moins fin, dans .../export/web/, pour la page
-éclatée (`maquette/pack.py`)."""
+éclatée (`maquette/pack.py`), et avec toutes les plaques de flanc, même masquées, puisque la page les propose."""
 import array
 import json
 import os
 import adsk.core, adsk.fusion
 
-SKIP = ('mrd076a_esp32_s3', 'clip_aile', 'clip_milieu', 'patron', 'visserie:1+insert')
+SKIP = ('mrd076a_esp32_s3', 'clip_aile', 'clip_milieu', 'patron', 'visserie:1+insert', 'plaque_bossage:1+insert',
+        'plaque_bossage_fusible:1+insert')
+PLAQUES = ('plaque_flanc:1', 'plaque_bossage:1', 'plaque_bossage_fusible:1')
 COLOR_IDS = ('opaque_albedo', 'generic_diffuse', 'metal_f0', 'layered_diffuse')
 
 
@@ -109,7 +111,7 @@ def afficheur(sortie, occ, m, qualite, qualite_arriere, tout):
     return n
 
 
-def exporte(dossier, skip, qualite, qualite_carte, tout):
+def exporte(dossier, skip, qualite, qualite_carte, tout, masquees=()):
     app = adsk.core.Application.get()
     doc = app.activeDocument
     assert doc.name.startswith('claudometre'), doc.name
@@ -124,17 +126,18 @@ def exporte(dossier, skip, qualite, qualite_carte, tout):
     for i in range(root.allOccurrences.count):
         o = root.allOccurrences.item(i)
         top = o.fullPathName.split('+')[0]
-        if o.fullPathName.startswith(skip) or not o.isVisible:
+        force = top in masquees
+        if o.fullPathName.startswith(skip) or not (o.isVisible or force):
             continue
         m = o.transform2.asArray()
-        if '+' not in o.fullPathName:
+        if '+' not in o.fullPathName or 'connecteur_LP-16' in o.fullPathName:
             poses[o.fullPathName] = list(m)
         if top.startswith('afficheur'):
             segments = afficheur(s, o, m, qualite, qualite_carte, tout)
             continue
         for j in range(o.bRepBodies.count):
             b = o.bRepBodies.item(j)
-            if not b.isVisible:
+            if not (b.isVisible or (force and b.isLightBulbOn)):
                 continue
             q = qualite_carte if top.startswith('mrd076a') else qualite
             lo, hi = s.ajoute([calcule(b.nativeObject or b, q)], m,
@@ -164,4 +167,4 @@ def run(ctx):
 
 
 def complet(ctx):
-    exporte('web', ('patron',), 0.006, 0.02, True)
+    exporte('web', ('patron',), 0.006, 0.02, True, PLAQUES)

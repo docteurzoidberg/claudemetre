@@ -35,6 +35,7 @@ FHC = countersunk screw, CHC = socket head screw.
 | 4-digit 0.56" 7-seg module with decimal points (TM1637), yellow | 1 | AliExpress 1005001970566474; dimensions: `design/references/tm1637/README.md` |
 | CLAUDE indicator: length of 144 LED/m WS2812B strip (4 LEDs), 1N400x diode, 2 FHC M3×8, 2 M3 inserts | 1 | parts printed from the generator, see [indicator.md](indicator.md) |
 | 5 V USB cable / power supply | 1 | |
+| 5 × 20 panel fuse holder and fuse | 1 | on `plaque_bossage_fusible`, protects the 12 V input; dimensions: `design/references/fusible/README.md` |
 
 Nothing else if possible: no trimmer, no filter board.
 
@@ -100,8 +101,11 @@ Nothing else if possible: no trimmer, no filter board.
   plate on the unused side: changing connector means remaking a plate, not
   the shell. The cable goes through either side.
 - `plaque_flanc` is the generic blank plate, which sets the common interface.
-  `plaque_bossage` carries the LP-16, tilted 30° upwards. See
-  `design/fusion/README.md`.
+  `plaque_bossage` carries the LP-16, tilted 30° upwards.
+  `plaque_bossage_fusible` carries the LP-16 and a fuse holder protecting the 12 V
+  input, on parallel axes at 45°. See `design/fusion/README.md`.
+- Each plate is a complete component, with its connectors and their screws. All
+  of them stay in the design: show the one you want and hide the others.
 
 ### Manufacturing
 
@@ -135,7 +139,7 @@ Nothing else if possible: no trimmer, no filter board.
   | Faceplate to shell | FHC M3×12 | 4 |
   | Nameplates | FHC M3×12 | 6 |
   | Side plates | CHC M3×6, head half sunk | 8 |
-  | LP-16 connector on `plaque_bossage` | FHC M3×12, into 4 M3 inserts | 4 |
+  | LP-16 connector on `plaque_bossage` or `plaque_bossage_fusible` | FHC M3×12, into 4 M3 inserts | 4 |
   | Display PCB | CHC M3×6 | 4 |
   | SO-45 flanges | CHC M3×12 | 8 |
   | CLAUDE indicator | FHC M3×8, end of stock (the generator specifies M3×10) | 2 |
@@ -209,6 +213,8 @@ Missing window = unknown value, **not** 0 %.
       is to be printed afterwards, since its holes follow these values.
 - [ ] 12 V power: ATC supply and LP-16. Confirm the M3 mounting on the part
       received before printing `plaque_bossage`.
+- [ ] `plaque_bossage_fusible`: confirm on the parts the fuse holder's thread, the
+      nut and how the tube slices, then make its 3MF files.
 - [ ] Wiring diagram (`design/cablage/index.html`) to rework for the terminal
       board: it still describes wires soldered to J1.
 - [ ] Lovelace card to realign with the object: indicator (52 × 18 frame, 32 × 11 window),

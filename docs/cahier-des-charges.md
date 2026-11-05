@@ -31,6 +31,7 @@
 | Module 7 seg 4 chiffres 0,56" à points décimaux (TM1637), jaune | 1 | AliExpress 1005001970566474 ; cotes : `design/references/tm1637/README.md` |
 | Témoin CLAUDE : tronçon de ruban WS2812B à 144 LED/m (4 LED), diode 1N400x, 2 FHC M3×8, 2 inserts M3 | 1 | pièces imprimées par le générateur, voir [temoin.md](temoin.md) |
 | Câble / alim USB 5 V | 1 | |
+| Porte-fusible de panneau 5 × 20 et fusible | 1 | sur `plaque_bossage_fusible`, protège l'arrivée 12 V ; cotes : `design/references/fusible/README.md` |
 
 Rien d'autre si possible : ni potentiomètre d'ajustage, ni carte de filtrage.
 
@@ -96,8 +97,11 @@ Rien d'autre si possible : ni potentiomètre d'ajustage, ni carte de filtrage.
   pleine du côté inutilisé : changer de connecteur, c'est refaire une plaque, pas
   la coque. Le câble passe par l'un ou l'autre flanc.
 - `plaque_flanc` est la plaque générique, pleine, qui fixe l'interface commune.
-  `plaque_bossage` porte le LP-16, incliné de 30° vers le haut. Voir
-  `design/fusion/README.md`.
+  `plaque_bossage` porte le LP-16, incliné de 30° vers le haut.
+  `plaque_bossage_fusible` porte le LP-16 et un porte-fusible qui protège l'arrivée
+  12 V, axes parallèles à 45°. Voir `design/fusion/README.md`.
+- Chaque plaque est un composant complet, avec ses connecteurs et leur visserie.
+  Toutes restent dans le design : on affiche celle qu'on veut et on masque les autres.
 
 ### Fabrication
 
@@ -131,7 +135,7 @@ Rien d'autre si possible : ni potentiomètre d'ajustage, ni carte de filtrage.
   | Platine sur la coque | FHC M3×12 | 4 |
   | Plaquettes | FHC M3×12 | 6 |
   | Plaques de flanc | CHC M3×6, tête à moitié noyée | 8 |
-  | Connecteur LP-16 sur `plaque_bossage` | FHC M3×12, dans 4 inserts M3 | 4 |
+  | Connecteur LP-16 sur `plaque_bossage` ou `plaque_bossage_fusible` | FHC M3×12, dans 4 inserts M3 | 4 |
   | Circuit de l'afficheur | CHC M3×6 | 4 |
   | Collerettes des SO-45 | CHC M3×12 | 8 |
   | Témoin CLAUDE | FHC M3×8, fin de stock (le générateur annonce M3×10) | 2 |
@@ -205,6 +209,8 @@ Fenêtre absente = valeur inconnue, ce n'est **pas** 0 %.
       est à imprimer ensuite, car ses trous suivent ces valeurs.
 - [ ] Alimentation 12 V : alim ATC et LP-16. Confirmer la fixation M3 sur la pièce
       reçue avant d'imprimer `plaque_bossage`.
+- [ ] `plaque_bossage_fusible` : confirmer sur les pièces le filet du porte-fusible,
+      l'écrou et le tranchage du tube, puis faire ses 3MF.
 - [ ] Schéma de câblage (`design/cablage/index.html`) à reprendre pour la carte à
       borniers : il décrit encore des fils soudés sur J1.
 - [ ] Carte Lovelace à recaler sur l'objet : voyant (cadre 52 × 18, fenêtre 32 × 11),

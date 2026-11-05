@@ -256,8 +256,9 @@ def modele(nom):
 
 
 def pose_connecteur(ctx, nom='connecteur_LP-16_2poles'):
-    """Insère un LP-16 de models/ : bride sur la face inclinée, ergot vers le haut de la pente.
-    Repère du modèle : origine au centre de la face arrière de la bride, +Z vers la fiche, +Y vers l'ergot."""
+    """Insère un LP-16 de models/ dans le composant de la plaque : bride sur la face inclinée, ergot vers le haut
+    de la pente. Repère du modèle : origine au centre de la face arrière de la bride, +Z vers la fiche, +Y vers
+    l'ergot."""
     assert app.activeDocument.name.startswith('claudometre'), app.activeDocument.name
     d = design()
     root = d.rootComponent
@@ -265,14 +266,15 @@ def pose_connecteur(ctx, nom='connecteur_LP-16_2poles'):
     sk = occ.component.sketches.itemByName('face')
     ctr = [p for p in sk.sketchPoints if p.isReference][0].createForAssemblyContext(occ)
 
-    lp = root.occurrences.addByInsert(modele(nom), adsk.core.Matrix3D.create(), True)
-    lp.isGroundToParent = False
+    sub = occ.component.occurrences.addByInsert(modele(nom), adsk.core.Matrix3D.create(), True)
+    sub.isGroundToParent = False
+    lp = sub.createForAssemblyContext(occ)
     n, u = axes(d)
     want = ctr.worldGeometry
     for flip in (False, True):
         for ang in ('0 deg', '90 deg', '180 deg', '270 deg'):
             ji = root.joints.createInput(
-                adsk.fusion.JointGeometry.createByPoint(lp.component.originConstructionPoint.createForAssemblyContext(lp)),
+                adsk.fusion.JointGeometry.createByPoint(sub.component.originConstructionPoint.createForAssemblyContext(lp)),
                 adsk.fusion.JointGeometry.createByPoint(ctr))
             ji.setAsRigidJointMotion()
             ji.isFlipped = flip
@@ -327,13 +329,13 @@ def lier(root, vocc, df, edge, n, nom, apparence, offset=None):
 
 
 def visserie_connecteur(ctx):
-    """4 inserts dans les logements et 4 FHC M3×12 dans les fraisures de la bride du LP-16."""
+    """4 inserts dans les logements et 4 FHC M3×12 dans les fraisures de la bride du LP-16, dans le composant de
+    la plaque, pour que tout s'affiche et se masque d'un bloc."""
     assert app.activeDocument.name.startswith('claudometre'), app.activeDocument.name
     d = design()
     root = d.rootComponent
     occ = [o for o in root.occurrences if o.component.name == 'plaque_bossage'][0]
-    lp = [o for o in root.occurrences if o.component.name.startswith('connecteur_LP-16')][0]
-    vocc = [o for o in root.occurrences if o.component.name == 'visserie'][0]
+    lp = [o for o in occ.childOccurrences if o.component.name.startswith('connecteur_LP-16')][0]
     n, _ = axes(d)
 
     def hauteur(e):
@@ -351,8 +353,20 @@ def visserie_connecteur(ctx):
     assert len(logements) == 4 and len(fraisures) == 4, (len(logements), len(fraisures))
     laiton, noir = d.appearances.itemByName('Laiton poli'), d.appearances.itemByName('Oxyde noir')
     for i, e in enumerate(logements):
-        lier(root, vocc, modele('insert_chaud_M3'), e, n, 'insert_connecteur_%d' % (i + 1), laiton)
+        lier(root, occ, modele('insert_chaud_M3'), e, n, 'insert_connecteur_%d' % (i + 1), laiton)
     for i, e in enumerate(fraisures):
         # La tête dépasse de la bride : le modèle a un bord cylindrique de 0,2 que la fraisure n'a pas.
-        lier(root, vocc, modele('vis_FHC_M3x12'), e, n, 'vis_connecteur_%d' % (i + 1), noir, '-0.2 mm')
-    print('visserie', vocc.component.occurrences.count, 'alertes', unhealthy())
+        lier(root, occ, modele('vis_FHC_M3x12'), e, n, 'vis_connecteur_%d' % (i + 1), noir, '-0.2 mm')
+    print('occurrences', occ.component.occurrences.count, 'alertes', unhealthy())
+
+
+def regroupe(ctx):
+    """Fait une fois sur claudometre (05/11/2026) : LP-16, inserts et vis rangés dans le composant de la plaque.
+    Les liaisons restent à la racine et continuent de piloter les pièces (vérifié avec bossage_angle)."""
+    assert app.activeDocument.name.startswith('claudometre'), app.activeDocument.name
+    root = design().rootComponent
+    occ = root.occurrences.itemByName('plaque_bossage:1')
+    assert root.occurrences.itemByName('connecteur_LP-16_2poles:1').moveToComponent(occ)
+    for n in ['insert_chaud_M3:%d' % i for i in (31, 32, 33, 34)] + ['vis_FHC_M3x12:%d' % i for i in (11, 12, 13, 14)]:
+        assert [o for o in root.occurrences.itemByName('visserie:1').childOccurrences if o.name == n][0].moveToComponent(occ), n
+    print('occurrences', occ.component.occurrences.count, 'alertes', unhealthy())

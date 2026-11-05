@@ -137,8 +137,16 @@ def _groupes(modele):
             key = (racine, "noir_y")
         elif racine == "plaque_flanc":
             key = (racine, "noir_x")
-        elif racine == "plaque_bossage":
-            key = (racine, "kaki_x")
+        elif racine in ("plaque_bossage", "plaque_bossage_fusible"):
+            # Le connecteur, sa visserie et le porte-fusible sont dans le composant de la plaque.
+            if not sous:
+                key = (racine, "kaki_x")
+            elif sous.startswith("connecteur_LP-16"):
+                key = ("lp16_embase", "lp16")
+            elif sous.startswith("porte_fusible"):
+                key = ("porte_fusible", "black")
+            else:
+                key = ("visserie", "black_oxide")
         elif racine == "voltmetre_SO-45":
             key = (f"so45_{top[-1]}_{'corps' if app == 'ABS (Black)' else 'bornes'}",
                    "black" if app == "ABS (Black)" else "steel")
@@ -219,7 +227,7 @@ def _so45(M, root, x, pct, label):
 def _fiche_et_cable(modele, M, root):
     """Fiche LP-16 de la série 5 sur l'embase, dans son axe, ergot vers le haut, puis le câble : il part
     dans l'axe de la fiche, passe par-dessus et tombe le long de la planche."""
-    p = modele.pose("connecteur_LP-16_2poles:1")
+    p = modele.pose(next(k for k in modele.idx["poses"] if "connecteur_LP-16" in k))
     ax, ay, az = (p.col[k].to_3d() for k in range(3))
     bout = p.translation + az * BRIDE
     e = L.empty("lp16_fiche_pose", parent=root)

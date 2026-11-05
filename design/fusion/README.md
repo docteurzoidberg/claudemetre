@@ -16,7 +16,8 @@ dans `scripts/` (ordre et rôle dans `scripts/README.md`).
 | `models/voltmetre_SO-45` | envoyé depuis le `.f3d` d'origine : 4 corps, paramétrique. Unités mm, **façade vers +Y** (lunette à y = +9,3, bornes à y = -32,9), axe de la jauge sur Y à x = z = 0 |
 | `models/afficheur_TM1637_056` | envoyé depuis le STEP : corps à plat, sans composants, segments passés au **jaune** du vrai module, connecteur coudé retiré. Origine au centre de la face avant de l'afficheur, **façade vers +Z** (face à z = 0, dos jusqu'à z = -12) |
 | `models/mrd076a_esp32_s3` | envoyé depuis le STEP (`../references/mrd076a/`) : carte à borniers avec l'ESP32 enfiché, 8 composants, 922 corps. Unités mm, origine au milieu d'un petit bord, sur le dos du circuit, composants vers +Z |
-| `models/connecteur_LP-16_2poles`, `models/connecteur_LP-16_USB-C` | embases LP-16 (`../references/lp16/`). Le 2 pôles est posé sur `plaque_bossage`, l'USB-C n'est pas utilisé |
+| `models/connecteur_LP-16_2poles`, `models/connecteur_LP-16_USB-C` | embases LP-16 (`../references/lp16/`). Le 2 pôles est posé sur `plaque_bossage` et `plaque_bossage_fusible`, l'USB-C n'est pas utilisé |
+| `models/porte_fusible_5x20` | envoyé depuis le STEP (`../references/fusible/`) : 7 corps, unités mm, axe sur Z, +Z vers le capuchon, origine près de son sommet. Posé sur `plaque_bossage_fusible` |
 | `models/insert_chaud_M3` | insert laiton M3 Ø5 × 4, origine sur la face d'entrée, corps vers -Z |
 | `models/vis_FHC_M3x12` | vis fraisée M3×12, origine sur le dessus de la tête |
 | `models/vis_CHC_M3x12`, `models/vis_CHC_M3x6` | vis CHC M3, origine sous la tête |
@@ -43,9 +44,9 @@ Blender (profondeur positive vers le mur). Toutes les cotes sont des paramètres
 | `fond-jauge-session` / `fond-jauge-semaine` | cadrans à imprimer, insérés comme composants externes (« Mettre à jour » après une nouvelle version). Chacun est lié à son SO-45 (`cadran_session`, `cadran_semaine`) : origine du cadran sur l'axe de la jauge, à `jauge_appui` du dos de la collerette |
 | `claude` | témoin CLAUDE, centré à x = 0, z = −26, sans liaison |
 | `mrd076a_esp32_s3`, `clip_aile`, `clip_aile_miroir`, `clip_milieu` | carte à borniers et ses clips, voir « Support de la carte à borniers » |
-| `plaque_flanc`, `plaque_bossage` | plaques de flanc, voir « Interface des plaques de flanc » |
+| `plaque_flanc`, `plaque_bossage`, `plaque_bossage_fusible` | plaques de flanc, chacune avec ses connecteurs et leur visserie, voir « Interface des plaques de flanc » |
 | `patron` | patron de perçage, voir « Accroche murale » |
-| `visserie` | 34 inserts M3 ; 14 FHC M3×12 (platine → coque 4, plaquettes 6, connecteur 4) ; 8 CHC M3×12 (collerettes) ; 12 CHC M3×6 (plaques de flanc 8, circuit de l'afficheur 4). Chacun est lié au centre de son perçage. Vis visibles en oxyde noir |
+| `visserie` | 30 inserts M3 ; 10 FHC M3×12 (platine → coque 4, plaquettes 6) ; 8 CHC M3×12 (collerettes) ; 12 CHC M3×6 (plaques de flanc 8, circuit de l'afficheur 4). Chacun est lié au centre de son perçage. Vis visibles en oxyde noir. La visserie d'un connecteur est dans le composant de sa plaque |
 
 Jeux contrôlés : corps des SO-45 à 0,5 mm des passages, afficheur à 0,3 mm de sa fenêtre,
 circuit de l'afficheur à **0,9 mm** du SO-45 de droite. Le connecteur coudé du modèle, qui
@@ -171,6 +172,10 @@ suivent ses cotes. L'interface est identique sur les deux flancs et symétrique 
 Une plaque symétrique va donc des deux côtés ; une plaque asymétrique existe en variantes gauche et
 droite.
 
+Chaque plaque est un composant complet : la plaque, ses connecteurs et leur visserie. Toutes les plaques
+restent dans le design : on en affiche une par flanc et on masque les autres. Seules les 4 CHC M3×6 du
+flanc restent dans `visserie`, puisqu'elles servent à toutes les plaques.
+
 | Élément | Cote | Paramètres |
 | --- | --- | --- |
 | Plaque | 86 × 32 × 4, coins R 3 : 3 logés dans la feuillure, 1 en saillie du flanc | `plaque_H`, `plaque_P`, `plaque_ep`, `plaque_saillie`, `plaque_R` |
@@ -207,7 +212,8 @@ d'environ 84 mm.
 
 Bossage incliné : le connecteur regarde 30° vers le haut et l'extérieur (`scripts/plaque_bossage.py`,
 sonde `scripts/check_bossage.py`). Composant à part, posé sur le flanc droit par
-`jo_plaque_flanc_droite`, à la place de `plaque_flanc:1`, masquée. Contour, partie logée, dépassement
+`jo_plaque_flanc_droite`, à la place de `plaque_flanc:1`, masquée. Le LP-16, ses inserts et ses vis sont
+dans le composant ; leurs liaisons sont restées à la racine et les pilotent toujours. Contour, partie logée, dépassement
 et vis viennent des paramètres de `plaque_flanc` : la plaque suit l'interface, et les 4 CHC M3×6 de la
 plaque générique restent justes. Le LP-16 repose sur le kaki, sa bride fait la finition.
 
@@ -239,6 +245,35 @@ côté de l'origine et ses cotes, non signées, ne suivent plus.
 La plaque est symétrique en X, un seul composant vaut pour les deux flancs. Mais
 `jo_plaque_flanc_gauche` met Y vers le bas : sur le flanc gauche, ajouter 180° autour de Z dans la
 liaison, sinon le connecteur regarde vers le bas.
+
+### Plaque `plaque_bossage_fusible`
+
+LP-16 et porte-fusible 5 × 20 sur deux faces en marche, axes parallèles à 45° vers le haut et l'extérieur
+(`scripts/plaque_bossage_fusible.py`). Le fusible protège l'arrivée 12 V. Forme « Gorge », retenue après une
+étude de sept formes le 05/11/2026 ; document de l'étude : `maquettes/maquette_fusible_gorge`. Composant à
+part, posé sur le flanc droit par `jo_plaque_flanc_droite`, avec le LP-16, le porte-fusible, 4 inserts et
+4 FHC M3×12 ; leurs liaisons sont dans le composant.
+
+Contour, partie logée, dépassement et vis viennent des paramètres de `plaque_flanc`, lus à la construction.
+Les cotes de forme sont en tête du script, pas dans les paramètres du design : pour en changer, supprimer
+le composant et relancer le script.
+
+| Élément | Cote |
+| --- | --- |
+| Face du LP-16 | 34 de long, 45° ; pied haut à 34,4 au-dessus du centre de la plaque ; LP-16 à 18 du pied, soit 1,75 de marge sous la bride, comme sur les côtés |
+| Face du fusible | 20 sous celle du LP-16 ; axe à 8,5 de la marche, 1 entre la collerette et le bossage |
+| Tube | section en goutte, flancs tangents aux coins du bossage, Ø 22, nez R 8 ; coins du bossage R 4,5, arêtes R 0,5 |
+| Gorge | Ø 20, coaxiale au fusible, arrêtée à 2,5 sous la face du LP-16 : traversante, elle mangerait la marge sous la bride |
+| Creux | largeur de la fenêtre ; parois de 6 sous la face, 4,5 sous la marche |
+| Intérieur du tube | paroi de 4 sous la face, perçage Ø 11,5, empreinte hexagonale de 15,3 sur plats × 3,5 qui bloque l'écrou (on visse par l'extérieur), alésage Ø 18 |
+
+Porte-fusible tourné d'un quart de tour, cosses sur les côtés. Dans le modèle, écrou et rondelles restent où
+le STEP les pose, 0,8 sous la paroi : sans effet sur la plaque. Capuchon à X = 128,4, nez du LP-16 à 128,9,
+bossage à 124,8.
+
+Contrôle (`controle()`, dans `claudometre`) : seuls les 4 inserts M3 recoupent la plaque, de 92,5 mm³, la
+matière qu'ils déplacent à la pose à chaud. Filet (Ø 11 ou M12), écrou et tranchage du tube (paroi de 2,
+supports) restent à confirmer sur les pièces. Sur le flanc gauche, ajouter 180° comme pour `plaque_bossage`.
 
 ## Cadrans à imprimer
 
