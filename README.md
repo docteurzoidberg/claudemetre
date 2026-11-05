@@ -147,6 +147,10 @@ Tout a été fait avec Claude : la CAO dans Fusion 360 et les rendus dans Blende
 le firmware ESPHome, la configuration Home Assistant, les fichiers d'impression et cette documentation. Je n'ai
 rien modélisé, codé ni écrit à la main.
 
+Pour travailler sur le dépôt avec Claude Code, `CLAUDE.md` décrit le projet. Les consignes personnelles (langue,
+habitudes, outils) vont dans un fichier `CLAUDE.local.md` à la racine : Claude Code le charge tout seul et Git
+l'ignore, il ne part donc pas dans une pull request.
+
 ## Crédits
 
 - Inspiré de [Clawdmeter](https://github.com/HermannBjorgvin/Clawdmeter), refait en WiFi et Home Assistant, sans

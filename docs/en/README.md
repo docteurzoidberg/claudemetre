@@ -149,6 +149,10 @@ Everything was made with Claude: the CAD in Fusion 360 and the renders in Blende
 the ESPHome firmware, the Home Assistant configuration, the print files and this documentation. I didn't model,
 code or write any of it by hand.
 
+To work on this repo with Claude Code, `CLAUDE.md` describes the project. Personal instructions (language, habits,
+tools) go in a `CLAUDE.local.md` file at the root: Claude Code loads it automatically and Git ignores it, so it
+stays out of pull requests.
+
 ## Credits
 
 - Inspired by [Clawdmeter](https://github.com/HermannBjorgvin/Clawdmeter), redone with WiFi and Home Assistant,
