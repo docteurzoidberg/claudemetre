@@ -295,7 +295,7 @@ cadran (`REGLAGES` dans `cadran_3mf.py`). Aucune pièce n'est attribuée à un f
 se choisissent au moment d'imprimer. Plus un aperçu de la face (`<variante>_apercu.png`). Ces deux
 fichiers sont verrouillés : voir `FICHIERS_VALIDES.md`.
 
-Après toute modification : skill `cadrans-3mf` du projet, ou à la main :
+Après toute modification : skill `regenerer-3mf` du projet, ou à la main :
 
 1. `scripts/export_cadrans.py` dans Fusion (copié dans `%TEMP%\claudemetre\`, chargeur de
    `scripts/README.md`) : un STL par composant de chaque variante dans `%TEMP%\claudemetre\export\`. Une

@@ -10,7 +10,8 @@ la source de Pages sur « GitHub Actions » dans les réglages du dépôt.
 
 ## Mettre à jour avant de pousser
 
-À faire **juste avant de pousser sur la remote**, si le design a changé. Inutile pendant le développement.
+À faire **juste avant de pousser sur la remote**, si le design a changé. Inutile pendant le développement. Le skill
+`regenerer-maquette` suit cette procédure et republie aussi l'artefact.
 
 1. **Fusion** : ouvrir `claudometre`, copier `design/fusion/scripts/export_blender.py` dans
    `%TEMP%\claudemetre\` et lancer sa fonction `complet` (lecture seule, voir

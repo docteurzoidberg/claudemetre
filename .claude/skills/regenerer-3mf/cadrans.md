@@ -1,8 +1,3 @@
----
-name: cadrans-3mf
-description: Régénère les 3MF prêts à imprimer des cadrans du claudomètre (design/fusion/print/fond-jauge-session.3mf et fond-jauge-semaine.3mf) depuis les designs Fusion fond-jauge-session / fond-jauge-semaine. À utiliser après une modification de fond-jauge (plaque, épaisseurs, lamages), d'une variante, ou des graduations et textes des cadrans (so45_print.py, dial_so45_spec.json), ou quand on demande les 3MF des cadrans.
----
-
 # 3MF des cadrans
 
 ```
@@ -38,9 +33,8 @@ texte), face visible contre le plateau, au centre du plateau de la U1.
   relu (`gabarit.charger('projet.3mf').enregistrer(...)`, skill
   `impression-3d`), sans se servir de son fichier tel quel.
 
-Charger d'abord le skill `fusion360` (Fusion lancé, MCP actif). Rappel
-(mémoire `feedback-fusion-workflow`) : **ne jamais enregistrer les designs
-Fusion soi-même**, le demander à l'utilisateur.
+Charger d'abord le skill `fusion360` (Fusion lancé, MCP actif). Rappel : **ne
+jamais enregistrer les designs Fusion soi-même**, le demander à l'utilisateur.
 
 ## 1. Répercuter la modification dans les variantes
 

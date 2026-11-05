@@ -76,6 +76,10 @@ homeassistant/  package HA (packages/claudemetre.yaml), carte Lovelace (www/clau
                 aperçu et générateur de la carte (card-dev/)
 maquette/   page 3D assemblé / éclaté (three.js, sans build) et son modèle claudometre.glb
             (`uv run pack.py`), publiée sur GitHub Pages : voir maquette/README.md
+.claude/    skills/ du projet : regenerer-maquette, rendu-maquette, regenerer-3mf, nouvelle-plaque,
+            regenerer-docs-en, avant-push
+.githooks/  hooks Git : pre-commit (ni lien d'artefact ni valeur de prive.env), pre-push (docs/en/ à jour,
+            skill regenerer-docs-en) ; à activer une fois par clone : `git config core.hooksPath .githooks`
 docs/       cahier des charges, notes techniques
   en/       version anglaise du README et des docs
 design/     maquettes et gabarits
@@ -92,7 +96,7 @@ design/     maquettes et gabarits
                                    (cotes dans dials/dial_so45_spec.json)
   plaquettes/plaquettes_texte.py   textes des plaquettes (DXF pour Fusion) : `uv run plaquettes_texte.py`
   fusion/scripts/                  scripts de construction du design Fusion (exécutés par MCP, voir README)
-  fusion/print/                    3MF des cadrans à imprimer, une pièce par couleur (`uv run cadran_3mf.py`, skill `cadrans-3mf`) ;
+  fusion/print/                    3MF des cadrans à imprimer, une pièce par couleur (`uv run cadran_3mf.py`, skill `regenerer-3mf`) ;
                                    coque, platine, patron de perçage, plaquettes, visière, plaques de flanc et clips (`uv run coque_3mf.py`, `platine_3mf.py`, `patron_3mf.py`, `plaquettes_3mf.py`,
                                    `visiere_3mf.py`, `plaques_3mf.py`, `clips_3mf.py`)
   cablage/index.html               schéma de câblage (artifact privé, republier sur la même URL)

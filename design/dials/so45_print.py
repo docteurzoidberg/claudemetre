@@ -18,7 +18,7 @@ Usage : uv run so45_print.py
   → contrôle les cadrans : corps sans chevauchement, détails plus fins que la buse.
 
 Les pièces à imprimer viennent de Fusion : design/fusion/cadran_dxf.py reprend
-ces formes, puis le skill cadrans-3mf écrit design/fusion/print/fond-jauge-*.3mf.
+ces formes, puis le skill regenerer-3mf écrit design/fusion/print/fond-jauge-*.3mf.
 
 Les cotes viennent de dial_so45_spec.json : plaque, axe et débattement
 mesurés sur le cadran démonté ; reste le jeu sous l'aiguille (épaisseur).
