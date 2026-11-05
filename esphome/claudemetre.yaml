@@ -109,6 +109,21 @@ globals:
   - id: boot_testing
     type: bool
     initial_value: "true"
+  # Début de l'animation du démarrage (millis).
+  - id: boot_start
+    type: uint32_t
+    initial_value: "0"
+  # Reset de la session guetté tant qu'il est à venir ; 0 = aucun.
+  - id: reset_armed
+    type: time_t
+    initial_value: "0"
+  # Reset qui vient de passer, et images de clignotement qu'il reste à montrer.
+  - id: reset_passed
+    type: time_t
+    initial_value: "0"
+  - id: reset_blink_left
+    type: int
+    initial_value: "0"
 
 # PWM au-dessus de l'audible : le cadre mobile en fait la moyenne.
 output:
@@ -279,9 +294,43 @@ interval:
           glide(id(week_duty), target(id(week_forced), id(week_used).state, id(week_resets_at).state, week_cal),
                 id(week_pwm));
 
+  # Animation du démarrage : 12 images par seconde, le temps du test. Une image
+  # bloque l'ESP32 environ 26 ms : pas de cette cadence le reste du temps.
+  - interval: 80ms
+    then:
+      - if:
+          condition:
+            lambda: return id(boot_testing);
+          then:
+            - component.update: tm_display
+
+  # Reset de la session atteint pendant que l'appareil tourne : 25 images de
+  # 200 ms, soit 5 s de clignotement. Rien au redémarrage sur un reset déjà passé.
+  - interval: 200ms
+    then:
+      - lambda: |-
+          if (id(reset_blink_left) > 0) {
+            id(reset_blink_left)--;
+            id(tm_display).update();
+            return;
+          }
+          const auto now = id(ha_time).now();
+          if (!now.is_valid())
+            return;
+          const time_t reset = atoll(id(session_resets_at).state.c_str());
+          if (reset > now.timestamp) {
+            id(reset_armed) = reset;
+          } else if (id(reset_armed) != 0 && id(reset_armed) <= now.timestamp) {
+            id(reset_passed) = id(reset_armed);
+            id(reset_armed) = 0;
+            id(reset_blink_left) = 25;
+            id(tm_display).update();
+          }
+
 # Reset de la session, selon display_mode : heure (HH.MM) ou temps restant
 # (-H.MM, 5 h au plus). Point du 2e chiffre qui clignote ; --.-- si
-# l'heure est inconnue ou passée.
+# l'heure est inconnue ou passée. Le test du démarrage et le clignotement du
+# reset passent avant.
 display:
   - platform: tm1637
     id: tm_display
@@ -292,7 +341,33 @@ display:
     lambda: |-
       it.set_intensity(uint8_t(id(display_brightness).state));
       if (id(boot_testing)) {
-        it.print("88.88");
+        // Tour de piste : un trait fait le tour et s'allonge, puis tout s'allume.
+        const uint32_t t = millis() - id(boot_start);
+        if (t >= 5200) {
+          it.print("88.88");
+          return;
+        }
+        // Pourtour : chiffre, segment (1 = a, 2 = b, 4 = c, 8 = d, 16 = e, 32 = f).
+        static const uint8_t ring[12][2] = {{0, 1}, {1, 1}, {2, 1}, {3, 1}, {3, 2},  {3, 4},
+                                            {3, 8}, {2, 8}, {1, 8}, {0, 8}, {0, 16}, {0, 32}};
+        uint8_t segments[4] = {0, 0, 0, 0};
+        const int head = t / 80, length = std::min(12, 3 + int(t / 520));
+        for (int i = 0; i < length; i++) {
+          const uint8_t *step = ring[(head - i + 12) % 12];
+          segments[step[0]] |= step[1];
+        }
+        it.set_buffer(segments, 4);
+        return;
+      }
+      if (id(reset_blink_left) > 0) {
+        // Dernière valeur affichée, à pleine luminosité, une image sur deux.
+        it.set_intensity(7);
+        if (id(reset_blink_left) % 2 == 0)
+          return;
+        if (id(display_mode).current_option() == "Temps restant")
+          it.print("-0.01");
+        else
+          it.strftime("%H.%M", ESPTime::from_epoch_local(id(reset_passed)));
         return;
       }
       const auto now = id(ha_time).now();
@@ -311,12 +386,14 @@ display:
       }
 
 script:
-  # Démarrage : aiguilles 0 → 100 → 0 %, afficheur 88.88, voyant ambre puis
-  # rouge ; ensuite tout suit Home Assistant (--.-- jusqu'aux premières données).
+  # Démarrage : aiguilles 0 → 100 → 0 %, tour de piste sur l'afficheur, voyant
+  # ambre puis rouge ; ensuite tout suit Home Assistant (--.-- jusqu'aux
+  # premières données).
   - id: boot_test
     then:
       - lambda: |-
           id(boot_testing) = true;
+          id(boot_start) = millis();
           id(session_forced) = 100;
           id(week_forced) = 100;
       - light.turn_on:

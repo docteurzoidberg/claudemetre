@@ -252,6 +252,11 @@ peut resservir aux témoins du générateur. L'appareil répond à `claudemetre.
   `Afficheur mode` : `Heure de reset` (`HH.MM` en heure locale) ou `Temps restant` (`-H.MM`,
   arrondi à la minute supérieure), décompté par l'ESP32 sans le PC ; le
   reste en composants natifs.
+- Animations de l'afficheur, dans la même lambda : au démarrage, tour de piste à 12 images
+  par seconde pendant les 6 s du test (`set_buffer`, un segment par bit) ; au reset de la
+  session, 5 s de clignotement à pleine luminosité (`interval` de 200 ms). Le reset n'est
+  guetté que s'il a été vu à venir : pas de clignotement au redémarrage sur un reset déjà
+  passé. Une image bloque l'ESP32 environ 26 ms, d'où cette cadence limitée à l'animation.
 - Jauges étalonnées en 5 points depuis HA : changer un point amène la jauge dessus pendant
   20 s, pour le régler à l'œil.
 

@@ -184,13 +184,15 @@ Fenêtre absente = valeur inconnue, ce n'est **pas** 0 %.
 ### Comportement de l'appareil
 
 - Heure : `time: homeassistant`, fuseau `Europe/Paris`.
-- Démarrage : aiguilles à 100 % puis à 0 %, afficheur à `88.88`, voyant ambre puis
-  rouge, puis `--.--` jusqu'aux premières données.
+- Démarrage : aiguilles à 100 % puis à 0 %, voyant ambre puis rouge. Sur l'afficheur,
+  un trait fait le tour et s'allonge jusqu'à `88.88`, puis `--.--` jusqu'aux premières
+  données.
 - Aiguilles qui glissent vers la nouvelle valeur (pleine échelle en ≈ 2,5 s), pour
   un rendu mécanique.
 - Usage inconnu : aiguille au repos.
 - Heure de reset passée : aiguille à 0 sans attendre le PC, et `--.--` sur
-  l'afficheur pour la session.
+  l'afficheur pour la session. Si le reset tombe pendant que l'objet tourne, la
+  dernière valeur clignote d'abord 5 s à pleine luminosité.
 - Point entre le 2e et le 3e chiffre, qui clignote quand une heure ou un temps
   restant est affiché.
 - Temps restant : `-H.MM`, arrondi à la minute supérieure (`-0.01` jusqu'au reset,
