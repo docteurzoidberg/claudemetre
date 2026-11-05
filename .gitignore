@@ -25,3 +25,6 @@ prive.env
 
 # Sauvegarde de l'ancien historique Git
 .git_historique/
+
+# Kit de présentation pour le Discord ESPHome : reste en local
+esphome-discord/
