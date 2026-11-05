@@ -86,6 +86,7 @@ design/     maquettes et gabarits
   references/mrd076a/              carte à borniers MRD076A avec l'ESP32 enfiché (STEP GrabCAD) + cotes (README), pour Fusion
   references/tm1637/               modèle 3D de l'afficheur TM1637 0,56" (STEP GrabCAD), contour des
                                    segments (`uv run step_to_segments.py`) + cotes (README)
+  references/fusible/              modèle 3D du porte-fusible 5 × 20 (STEP GrabCAD) + cotes (README), pour Fusion
   fusion/                          design Fusion 360 : notes et cotes (README), 3MF et leurs scripts
   dials/so45_print.py              dessin du cadran SO-45, repris par Fusion et la carte : `uv run so45_print.py`
                                    (cotes dans dials/dial_so45_spec.json)
