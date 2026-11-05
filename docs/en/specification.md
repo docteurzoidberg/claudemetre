@@ -213,8 +213,8 @@ Missing window = unknown value, **not** 0 %.
       is to be printed afterwards, since its holes follow these values.
 - [ ] 12 V power: ATC supply and LP-16. Confirm the M3 mounting on the part
       received before printing `plaque_bossage`.
-- [ ] `plaque_bossage_fusible`: confirm on the parts the fuse holder's thread, the
-      nut and how the tube slices, then make its 3MF files.
+- [ ] `plaque_bossage_fusible`: test 3MF to print; use it to confirm the fuse holder's
+      thread, the nut and how well the tube holds.
 - [ ] Wiring diagram (`design/cablage/index.html`) to rework for the terminal
       board: it still describes wires soldered to J1.
 - [ ] Lovelace card to realign with the object: indicator (52 × 18 frame, 32 × 11 window),

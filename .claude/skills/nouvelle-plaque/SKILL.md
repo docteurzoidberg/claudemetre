@@ -56,8 +56,8 @@ composant, `pose_<pièce>()` insère les pièces, `controle()` cherche les inter
 | Fichier | À ajouter |
 | --- | --- |
 | `design/fusion/scripts/export_blender.py` | `<plaque>:1` dans `PLAQUES`, `<plaque>:1+insert` dans `SKIP` ; la pose d'un connecteur autre que le LP-16 si la maquette en a besoin |
-| `design/fusion/scripts/export_plaques.py` | `<plaque>` dans `KEYS`, et ses paramètres dans la liste du `for` |
-| `design/fusion/plaques_3mf.py` | une entrée dans `PLAQUES` : filament, supports, saillie, jeu. Si la forme n'est pas paramétrée, comme `plaque_bossage_fusible`, passer sa saillie par `plaques.json` |
+| `design/fusion/scripts/export_plaques.py` | `<plaque>` dans `KEYS` : sa hauteur est mesurée sur le corps |
+| `design/fusion/plaques_3mf.py` | une entrée dans `PLAQUES` : filament, supports |
 
 Puis skill `regenerer-3mf`. `plaques_3mf.py` refuse toute face en surplomb hors du creux.
 

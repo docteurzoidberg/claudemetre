@@ -75,6 +75,7 @@ Tous dans `print/`. Après une modification : `scripts/export_<pièce>.py` dans 
 | `platine.3mf` | PETG noir (filament 3) | face avant sur le plateau, sans support | 1 h 07, 32 g |
 | `plaque_flanc.3mf` | PETG noir (filament 3) | face d'appui sur le plateau, sans support | 13 min, 7,2 g |
 | `plaque_bossage.3mf` | PETG kaki (filament 4) | face d'appui sur le plateau | 33 min, 11 g |
+| `plaque_bossage_fusible.3mf` | PETG kaki (filament 4) | face d'appui sur le plateau | 41 min, 14,5 g |
 | `clips.3mf` | PETG noir (filament 3) | les trois à la fois, sur le flanc, sans support | 21 min, 8,8 g |
 | `patron.3mf` | PETG | à plat | 16 min, 7,2 g |
 
@@ -85,10 +86,13 @@ Tous dans `print/`. Après une modification : `scripts/export_<pièce>.py` dans 
 - **`plaque_bossage`** : dans le creux, le plafond sous la face du connecteur est à 30° de
   l'horizontale : supports en arbre, en kaki, tous dans le creux (x ±11,6, y −22,6 à +4,3 dans le
   repère de la plaque), à retirer par le dos.
+- **`plaque_bossage_fusible`** : au tranchage, un seul arbre de support, dans le creux, sous le plafond derrière le
+  LP-16 (y = 6 à 17 dans le repère de la plaque), à retirer par le dos. Rien dans l'alésage ni l'empreinte de l'écrou,
+  dont les parois à 45° s'impriment seules. Fichier d'essai, pas encore imprimé.
 - **Clips** : les ailes sont posées du côté de leur oreille : de l'autre, 70 mm² seraient en
   surplomb. Sur le flanc, les parois suivent le profil : la zone qui fléchit (1,4 à 1,8 mm) et le
   bras du crochet (1,6 mm) sont faits de deux parois pleines, et le dessous à coller sort lisse.
-- Script d'export des deux plaques : `scripts/export_plaques.py`, puis `uv run plaques_3mf.py`.
+- Script d'export des plaques : `scripts/export_plaques.py`, puis `uv run plaques_3mf.py`.
 - **Snapmaker Orca** écrit le chemin local du fichier dans `source_file` (`Metadata/model_settings.config`)
   à chaque enregistrement : retirer ce champ avant de commiter un 3MF réenregistré, et réinscrire son
   empreinte s'il est verrouillé.
@@ -272,8 +276,8 @@ le STEP les pose, 0,8 sous la paroi : sans effet sur la plaque. Capuchon à X = 
 bossage à 124,8.
 
 Contrôle (`controle()`, dans `claudometre`) : seuls les 4 inserts M3 recoupent la plaque, de 92,5 mm³, la
-matière qu'ils déplacent à la pose à chaud. Filet (Ø 11 ou M12), écrou et tranchage du tube (paroi de 2,
-supports) restent à confirmer sur les pièces. Sur le flanc gauche, ajouter 180° comme pour `plaque_bossage`.
+matière qu'ils déplacent à la pose à chaud. Filet (Ø 11 ou M12), écrou et tenue du tube (paroi de 2)
+restent à confirmer sur une pièce imprimée. Sur le flanc gauche, ajouter 180° comme pour `plaque_bossage`.
 
 ## Cadrans à imprimer
 

@@ -23,7 +23,7 @@ design/fusion/print/<pièce>.3mf
 | Platine | `export_platine.py` | `platine_3mf.py` | `platine.3mf` |
 | Visière | `export_visiere.py` | `visiere_3mf.py` | `visiere.3mf` |
 | Plaquettes | `export_plaquettes.py` | `plaquettes_3mf.py` | `plaquettes.3mf` |
-| Plaques de flanc | `export_plaques.py` | `plaques_3mf.py` | `plaque_flanc.3mf`, `plaque_bossage.3mf` |
+| Plaques de flanc | `export_plaques.py` | `plaques_3mf.py` | `plaque_flanc.3mf`, `plaque_bossage.3mf`, `plaque_bossage_fusible.3mf` |
 | Clips | `export_clips.py` | `clips_3mf.py` | `clips.3mf` |
 | Patron | `export_patron.py` | `patron_3mf.py` | `patron.3mf` |
 

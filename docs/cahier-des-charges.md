@@ -209,8 +209,8 @@ Fenêtre absente = valeur inconnue, ce n'est **pas** 0 %.
       est à imprimer ensuite, car ses trous suivent ces valeurs.
 - [ ] Alimentation 12 V : alim ATC et LP-16. Confirmer la fixation M3 sur la pièce
       reçue avant d'imprimer `plaque_bossage`.
-- [ ] `plaque_bossage_fusible` : confirmer sur les pièces le filet du porte-fusible,
-      l'écrou et le tranchage du tube, puis faire ses 3MF.
+- [ ] `plaque_bossage_fusible` : 3MF d'essai à imprimer ; y confirmer le filet du
+      porte-fusible, l'écrou et la tenue du tube.
 - [ ] Schéma de câblage (`design/cablage/index.html`) à reprendre pour la carte à
       borniers : il décrit encore des fils soudés sur J1.
 - [ ] Carte Lovelace à recaler sur l'objet : voyant (cadre 52 × 18, fenêtre 32 × 11),

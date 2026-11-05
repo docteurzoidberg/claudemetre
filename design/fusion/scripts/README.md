@@ -58,7 +58,7 @@ def run(ctx):
 | `export_plaquettes.py` | **export, relançable** : un STL par corps et `export.json` pour `../plaquettes_3mf.py` (3MF à imprimer) |
 | `export_platine.py` | **export, relançable** : STL et `platine.json` pour `../platine_3mf.py` (3MF à imprimer) |
 | `export_visiere.py` | **export, relançable** : STL et `visiere.json` pour `../visiere_3mf.py` (3MF à imprimer) |
-| `export_plaques.py` | **export, relançable** : STL de `plaque_flanc` et `plaque_bossage`, en repère du composant, et `plaques.json` pour `../plaques_3mf.py` (3MF à imprimer) |
+| `export_plaques.py` | **export, relançable** : STL de chaque plaque (`KEYS`), en repère du composant, et `plaques.json` avec sa hauteur mesurée, pour `../plaques_3mf.py` (3MF à imprimer) |
 | `export_clips.py` | **export, relançable** : STL des trois clips, en repère du composant, et `clips.json` pour `../clips_3mf.py` (3MF à imprimer) |
 | `export_blender.py` | **export, relançable, lecture seule** : maillages des corps visibles, en place, avec les normales de Fusion, pour la maquette `jj_fusion` (`claudometre.bin`, `claudometre.json`, à copier dans `../blender/`) ; un corps par segment de l'afficheur. Sa fonction `complet` exporte aussi les pièces internes, pour la page `maquette/` (à copier dans `../web/`, hors dépôt) |
 | `check_plaquettes.py` | sonde, lecture seule : cotes, texte centré et à fleur, couleurs, et ce qu'il y a dans l'axe derrière les vis |

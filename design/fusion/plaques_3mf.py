@@ -7,7 +7,8 @@
 Usage : uv run plaques_3mf.py [dossier d'export]
   (défaut : le Temp Windows, %TEMP%/claudemetre/export/plaques)
   → print/plaque_flanc.3mf : PETG noir (gabarit u1-petg, filament 3), sans support.
-  → print/plaque_bossage.3mf : PETG kaki (filament 4), supports en arbre dans le creux, en kaki.
+  → print/plaque_bossage.3mf et print/plaque_bossage_fusible.3mf : PETG kaki (filament 4), supports en arbre
+    dans le creux, en kaki.
   Une plaque par fichier, face d'appui sur le plateau, face visible vers le haut, au centre du plateau.
 
 Pourquoi des supports dans `plaque_bossage` : le plafond du creux, sous la face du connecteur, est à
@@ -15,8 +16,9 @@ Pourquoi des supports dans `plaque_bossage` : le plafond du creux, sous la face 
 gardent propre la lèvre arrière du perçage Ø 16,5 (0,1 mm de jeu avec le fût). Le plafond sous la pente, à
 45°, s'imprime seul.
 
-Contrôles : maillage fermé, volume égal à celui du corps Fusion (à la tessellation près), cotes de la
-plaque, et aucune face en surplomb hors du creux : les supports ne touchent aucune surface visible.
+Contrôles : maillage fermé, volume égal à celui du corps Fusion (à la tessellation près), contour de la
+plaque, hauteur mesurée sur le corps Fusion, et aucune face en surplomb hors du creux : les supports ne
+touchent aucune surface visible.
 """
 import json
 import sys
@@ -36,9 +38,9 @@ NOIR, KAKI = 3, 4                           # têtes du PETG noir et kaki, comme
 COULEUR_KAKI = "#547117"
 SURPLOMB = -0.5                             # composante z de la normale : plus de 30° sous la verticale
 PLAQUES = {
-    # saillie : paramètre du dépassement ; jeu : l'arête du bossage est arrondie, elle n'atteint pas sa cote
-    "plaque_flanc": {"filament": NOIR, "supports": None, "saillie": "plaque_saillie", "jeu": 0.01},
-    "plaque_bossage": {"filament": KAKI, "supports": "tree(auto)", "saillie": "bossage_saillie", "jeu": 0.2},
+    "plaque_flanc": {"filament": NOIR, "supports": None},
+    "plaque_bossage": {"filament": KAKI, "supports": "tree(auto)"},
+    "plaque_bossage_fusible": {"filament": KAKI, "supports": "tree(auto)"},
 }
 
 
@@ -51,8 +53,8 @@ def controle(nom, r, m, e, info):
     a = np.sort(m.T[:, [0, 1, 1, 2, 2, 0]].reshape(-1, 2), axis=1)
     if (np.unique(a, axis=0, return_counts=True)[1] != 2).any():
         raise SystemExit(f"{nom} : maillage ouvert")
-    attendu = np.array([info["plaque_P"], info["plaque_H"], info["plaque_ep"] + info[r["saillie"]]])
-    if (np.abs(m.taille - attendu) > [0.01, 0.01, r["jeu"]]).any():
+    attendu = np.array([info["plaque_P"], info["plaque_H"], e["hauteur"]])
+    if (np.abs(m.taille - attendu) > 0.01).any():
         raise SystemExit(f"{nom} : dimensions {m.taille} au lieu de {attendu}")
     sous = n[:, 2] < SURPLOMB * np.linalg.norm(n, axis=1)
     sous &= tri[:, :, 2].max(axis=1) > 1e-3
