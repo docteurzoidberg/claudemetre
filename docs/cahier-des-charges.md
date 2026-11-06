@@ -83,9 +83,9 @@ Rien d'autre si possible : ni potentiomètre d'ajustage, ni carte de filtrage.
   de la coque (1,5 mm de profondeur sur un fond de 3 mm). Carte debout, centrée,
   antenne en haut. Câblage par les borniers des côtés seulement, passage de câbles
   possible sous la carte. Voir `design/fusion/README.md`.
-- Broches (firmware `esphome/claudemetre.yaml`), à la suite sur le connecteur de
+- Broches (firmware `esphome/claudemetre.yaml`), sur le connecteur de
   gauche : GPIO4 jauge session, GPIO5 jauge semaine, GPIO6 TM1637 CLK, GPIO7
-  TM1637 DIO, GPIO15 ruban du voyant.
+  TM1637 DIO, GPIO14 ruban du voyant.
 
 ### Alimentation et connecteurs
 

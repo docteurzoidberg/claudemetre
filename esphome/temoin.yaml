@@ -12,7 +12,7 @@
 #       vars:
 #         id: lamp           # lumière « lamp », réglage « lamp_brightness »
 #         name: Voyant
-#         pin: GPIO15
+#         pin: GPIO14
 #         led_count: 4
 # puis, selon les états :
 #   - light.turn_on: {id: lamp, red: 100%, green: 56%, blue: 12%, effect: Respiration}

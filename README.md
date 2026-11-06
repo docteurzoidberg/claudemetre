@@ -91,7 +91,7 @@ remplacent ensuite la plaque d'origine. Mesures et calculs dans
 | GPIO5 | `+` du voltmètre semaine, `−` à GND |
 | GPIO6 | TM1637 CLK |
 | GPIO7 | TM1637 DIO |
-| GPIO15 | DIN du ruban |
+| GPIO14 | DIN du ruban |
 | 3V3 | VCC du TM1637 |
 | 5V | alimentation, sur le bornier ; ruban à travers la diode, pour que le 3,3 V de DIN passe sans level shifter |
 

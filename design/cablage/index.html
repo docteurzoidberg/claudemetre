@@ -173,12 +173,12 @@
     <span class="eyebrow">Claudemètre · schéma de câblage</span>
     <h1>Câblage du Claudemètre</h1>
     <p class="lede">Une carte ESP32-S3-DevKitC-1, deux voltmètres SO-45, l'afficheur TM1637 et le ruban du voyant CLAUDE. Huit fils, tous sur le connecteur J1, et une seule pièce ajoutée hors des modules : une diode.</p>
-    <p class="meta">Brochage de <code>esphome/claudemetre.yaml</code> · 30/10/2026</p>
+    <p class="meta">Brochage de <code>esphome/claudemetre.yaml</code> · 06/11/2026</p>
   </header>
 
   <figure>
     <div class="sheet">
-      <svg class="sch" viewBox="0 0 940 680" role="img" aria-label="Schéma de câblage : du connecteur J1 de l'ESP32-S3, GPIO4 et GPIO5 vont à la borne plus des voltmètres session et semaine, GPIO6 et GPIO7 au CLK et DIO du TM1637 alimenté en 3V3, GPIO15 au DIN du ruban WS2812B alimenté par le 5V0 à travers une diode 1N400x ; toutes les masses sont communes.">
+      <svg class="sch" viewBox="0 0 940 680" role="img" aria-label="Schéma de câblage : du connecteur J1 de l'ESP32-S3, GPIO4 et GPIO5 vont à la borne plus des voltmètres session et semaine, GPIO6 et GPIO7 au CLK et DIO du TM1637 alimenté en 3V3, GPIO14 au DIN du ruban WS2812B alimenté par le 5V0 à travers une diode 1N400x ; toutes les masses sont communes.">
         <defs>
           <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
             <line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" stroke-width="1" opacity=".35"/>
@@ -277,7 +277,7 @@
         <path class="w w-g5" d="M711,166 H580 V287 H420"/>
         <path class="w w-clk" d="M711,190 H620 V412 H420"/>
         <path class="w w-dio" d="M711,214 H640 V432 H420"/>
-        <path class="w w-din" d="M711,238 H660 V516 H420"/>
+        <path class="w w-din" d="M711,526 H660 V516 H420"/>
         <!-- 5V0 par la diode (bague côté ruban) -->
         <path class="w w-5v" d="M711,550 H552 M534,550 H420"/>
         <polygon class="diode" points="552,541 552,559 535,550"/>
@@ -318,7 +318,7 @@
         <rect class="pad on" x="711" y="161" width="10" height="10"/><text class="t-on" x="730" y="170">GPIO5</text>
         <rect class="pad on" x="711" y="185" width="10" height="10"/><text class="t-on" x="730" y="194">GPIO6</text>
         <rect class="pad on" x="711" y="209" width="10" height="10"/><text class="t-on" x="730" y="218">GPIO7</text>
-        <rect class="pad on" x="711" y="233" width="10" height="10"/><text class="t-on" x="730" y="242">GPIO15</text>
+        <rect class="pad" x="711" y="233" width="10" height="10"/><text class="t-dim" x="730" y="242">GPIO15</text>
         <rect class="pad" x="711" y="257" width="10" height="10"/><text class="t-dim" x="730" y="266">GPIO16</text>
         <rect class="pad" x="711" y="281" width="10" height="10"/><text class="t-dim" x="730" y="290">GPIO17</text>
         <rect class="pad" x="711" y="305" width="10" height="10"/><text class="t-dim" x="730" y="314">GPIO18</text>
@@ -330,7 +330,7 @@
         <rect class="pad" x="711" y="449" width="10" height="10"/><text class="t-dim" x="730" y="458">GPIO11</text>
         <rect class="pad" x="711" y="473" width="10" height="10"/><text class="t-dim" x="730" y="482">GPIO12</text>
         <rect class="pad" x="711" y="497" width="10" height="10"/><text class="t-dim" x="730" y="506">GPIO13</text>
-        <rect class="pad" x="711" y="521" width="10" height="10"/><text class="t-dim" x="730" y="530">GPIO14</text>
+        <rect class="pad on" x="711" y="521" width="10" height="10"/><text class="t-on" x="730" y="530">GPIO14</text>
         <rect class="pad on" x="711" y="545" width="10" height="10"/><text class="t-on" x="730" y="554">5V0</text>
         <rect class="pad on" x="711" y="569" width="10" height="10"/><text class="t-on" x="730" y="578">GND</text>
 
@@ -359,7 +359,7 @@
         <rect class="pad" x="879" y="569" width="10" height="10"/>
       </svg>
     </div>
-    <figcaption>Carte vue de dessus, USB en bas. Les signaux partent du haut de J1 (broches 4 à 8), les alimentations des deux bouts (3V3 en 1, 5V0 et GND en 21 et 22). Un point marque une jonction, un pont un croisement sans contact. Dans les SO-45, le circuit interne avec la résistance à ajouter. Ordre des broches du TM1637 et des pastilles du ruban à lire sur la sérigraphie ; couleurs de fil proposées.</figcaption>
+    <figcaption>Carte vue de dessus, USB en bas. Les signaux partent du haut de J1 (broches 4 à 7) et du bas pour le ruban (broche 20), les alimentations des deux bouts (3V3 en 1, 5V0 et GND en 21 et 22). Un point marque une jonction, un pont un croisement sans contact. Dans les SO-45, le circuit interne avec la résistance à ajouter. Ordre des broches du TM1637 et des pastilles du ruban à lire sur la sérigraphie ; couleurs de fil proposées.</figcaption>
   </figure>
 
   <section>
@@ -402,7 +402,7 @@
           </tr>
           <tr>
             <td><span class="wire"><span class="sw bg-din"></span>jaune</span></td>
-            <td class="pin mono"><span class="num">8</span> · <b>GPIO15</b></td>
+            <td class="pin mono"><span class="num">20</span> · <b>GPIO14</b></td>
             <td>Ruban, DIN (côté entrée)</td>
             <td class="note">données en 3,3 V, sans level shifter</td>
           </tr>
@@ -440,11 +440,11 @@
       </article>
       <article>
         <h3>Ruban piloté en 3,3 V</h3>
-        <p>La 1N400x fait tomber l'alimentation du ruban vers 4,3 V. Le seuil haut du WS2812B (0,7 × VDD ≈ 3,0 V) passe sous les 3,3 V de GPIO15. Montage à valider sur breadboard.</p>
+        <p>La 1N400x fait tomber l'alimentation du ruban vers 4,3 V. Le seuil haut du WS2812B (0,7 × VDD ≈ 3,0 V) passe sous les 3,3 V de GPIO14. Montage à valider sur breadboard.</p>
       </article>
       <article>
         <h3>Tout sur J1</h3>
-        <p>Les huit fils partent du connecteur de gauche (USB en bas) : broches 1, 4 à 8, 21 et 22. La carte diymore est un clone : vérifier la sérigraphie avant de souder.</p>
+        <p>Les huit fils partent du connecteur de gauche (USB en bas) : broches 1, 4 à 7, 20, 21 et 22. La carte diymore est un clone : vérifier la sérigraphie avant de souder.</p>
       </article>
     </div>
   </section>

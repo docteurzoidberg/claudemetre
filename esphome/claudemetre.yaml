@@ -6,13 +6,13 @@
 # Spécification : docs/cahier-des-charges.md § 3 ; détail : docs/logiciel.md.
 #
 # Carte : diymore ESP32-S3-DevKitC-1 N16R8 (16 Mo de flash ; PSRAM octale
-# inutilisée, mais GPIO33-37 pris). Broches, à la suite sur le connecteur
+# inutilisée, mais GPIO33-37 pris). Broches, sur le connecteur
 # de gauche :
 #   GPIO4   jauge session : + du SO-45 A (− à GND)
 #   GPIO5   jauge semaine : + du SO-45 B (− à GND)
 #   GPIO6   TM1637 CLK (VCC en 3V3)
 #   GPIO7   TM1637 DIO
-#   GPIO15  DIN du ruban du voyant (voir temoin.yaml)
+#   GPIO14  DIN du ruban du voyant (voir temoin.yaml)
 #
 # Valider et compiler avec le skill esphome (esph.sh config / compile).
 
@@ -50,7 +50,7 @@ packages:
     vars:
       id: lamp
       name: Voyant
-      pin: GPIO15
+      pin: GPIO14
       led_count: 4 # ruban à 144 LED/m derrière la fenêtre de 32 mm
 
 time:

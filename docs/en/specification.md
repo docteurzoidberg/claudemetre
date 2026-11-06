@@ -87,9 +87,9 @@ Nothing else if possible: no trimmer, no filter board.
   of the shell (1.5 mm deep in a 3 mm back). Board upright, centered,
   antenna at the top. Wiring through the side terminal blocks only, with room for cables
   under the board. See `design/fusion/README.md`.
-- Pins (firmware `esphome/claudemetre.yaml`), in a row on the left-hand
+- Pins (firmware `esphome/claudemetre.yaml`), on the left-hand
   connector: GPIO4 session gauge, GPIO5 week gauge, GPIO6 TM1637 CLK, GPIO7
-  TM1637 DIO, GPIO15 indicator strip.
+  TM1637 DIO, GPIO14 indicator strip.
 
 ### Power and connectors
 

@@ -93,7 +93,7 @@ then replace the original plate. Measurements and calculations are in
 | GPIO5 | week voltmeter `+`, `−` to GND |
 | GPIO6 | TM1637 CLK |
 | GPIO7 | TM1637 DIO |
-| GPIO15 | strip DIN |
+| GPIO14 | strip DIN |
 | 3V3 | TM1637 VCC |
 | 5V | power supply, on the terminal block; strip through the diode, so the 3.3 V on DIN works without a level shifter |
 

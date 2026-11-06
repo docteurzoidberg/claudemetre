@@ -124,7 +124,7 @@ design/     maquettes et gabarits
   B0F3XMYYQY) : 16 Mo de flash, PSRAM octale (GPIO33-37
   pris), enfichée sur une carte à borniers **MRD076A** (Amazon B0FKBLR2KF).
   Broches : GPIO4 / GPIO5 jauges session / semaine (PWM), GPIO6 / GPIO7
-  TM1637 CLK / DIO, GPIO15 ruban du voyant (en tête de `esphome/claudemetre.yaml`).
+  TM1637 CLK / DIO, GPIO14 ruban du voyant (en tête de `esphome/claudemetre.yaml`).
 - Impression 3D du boîtier : **tout en PETG**, sauf les plaquettes : PLA noir,
   texte en PLA blanc.
 - **Platine déjà imprimée** : ne plus la modifier ; toute évolution
