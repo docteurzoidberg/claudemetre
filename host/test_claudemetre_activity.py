@@ -57,6 +57,22 @@ def test_background_subagent_outlives_main_stop():
     assert entries == {}
 
 
+def test_subagent_handback_ends_it_without_subagent_stop():
+    entries = play(cc("UserPromptSubmit"), cc("SubagentStart", agent_id="a1"),
+                   cc("PostToolUse", agent_id="a1", tool_name="WebFetch"))
+    assert ca.counts(entries) == (2, 0)
+    play(cc("PostToolUse", agent_id="a1", tool_name="SubagentHandback"), entries=entries)
+    assert list(entries) == ["cc:s1"]
+    play(cc("SubagentStop", agent_id="a1"), entries=entries)  # en arrière-plan, il suit le handback
+    assert list(entries) == ["cc:s1"]
+
+
+def test_failed_handback_keeps_the_subagent():
+    entries = play(cc("SubagentStart", agent_id="a1"),
+                   cc("PostToolUseFailure", agent_id="a1", tool_name="SubagentHandback"))
+    assert list(entries) == ["cc:s1:a1"]
+
+
 def test_session_end_drops_main_and_subagents():
     entries = play(cc("UserPromptSubmit"), cc("SubagentStart", agent_id="a1"),
                    cc("UserPromptSubmit", "other"), cc("SessionEnd", reason="clear"))

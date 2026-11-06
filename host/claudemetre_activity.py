@@ -50,6 +50,7 @@ INTERRUPT_MARK = "[Request interrupted by user"
 CONVERSATION = {"user", "assistant", "system", "api-request"}  # enregistrements datés du transcript
 SHELLS = {"sh", "dash", "bash", "zsh", "fish", "env", "timeout"}
 ASKING_TOOLS = {"AskUserQuestion", "ExitPlanMode"}  # outils de Claude Code qui questionnent
+HANDBACK_TOOL = "SubagentHandback"  # dernier outil d'un sous-agent : il rend son rapport
 WEBHOOK_KEY = "CLAUDEMETRE_ACTIVITY_WEBHOOK_ID"
 
 
@@ -137,6 +138,8 @@ def claude_code_event(entries, event, p, now, process):
             del entries[k]
     elif event == "PostToolUseFailure" and p.get("is_interrupt"):
         entries.pop(key, None)
+    elif event == "PostToolUse" and p.get("agent_id") and p.get("tool_name") == HANDBACK_TOOL:
+        entries.pop(key, None)  # un web-fetch au premier plan n'émet pas SubagentStop
     elif event == "PermissionRequest" or (event == "PreToolUse" and p.get("tool_name") in ASKING_TOOLS):
         touch(entries, key, now, process, transcript)["waits"][tool_wait] = now
     elif event in ("PostToolUse", "PostToolUseFailure", "PermissionDenied"):

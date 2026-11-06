@@ -170,11 +170,14 @@ the turn started and any current waits.
 
 | Tool | Turn start | Turn end | Wait: start / end |
 | --- | --- | --- | --- |
-| Claude Code | `UserPromptSubmit`, `SubagentStart` | `Stop`, `StopFailure`, `SubagentStop`, `SessionEnd`, interrupted `PostToolUseFailure` | `PermissionRequest`, `PreToolUse` (questions), `Elicitation` / `PostToolUse(Failure)`, `PermissionDenied`, `ElicitationResult` |
+| Claude Code | `UserPromptSubmit`, `SubagentStart` | `Stop`, `StopFailure`, `SubagentStop`, `SessionEnd`, interrupted `PostToolUseFailure`, `PostToolUse` of `SubagentHandback` | `PermissionRequest`, `PreToolUse` (questions), `Elicitation` / `PostToolUse(Failure)`, `PermissionDenied`, `ElicitationResult` |
 | Hermes | `pre_llm_call`, `subagent_start` | `on_session_end` (each end of turn: succeeded, failed or interrupted), `subagent_stop` | `on_human_input_request` / `on_human_input_resolved` |
 
 - A subagent has its own entry (`agent_id` in Claude Code, `child_session_id` in
   Hermes): the main session's `Stop` doesn't turn it off.
+- A foreground `web-fetch` subagent doesn't emit `SubagentStop` (Claude Code 2.1.319): its end
+  is read from the `SubagentHandback` tool, which it uses to hand in its report. Without this,
+  it would stay counted for an hour, until `STALE_AFTER`.
 - A permission wait clears at the end of **that** tool (same name), not another one
   launched in parallel. Limitation: it stays on while the approved tool runs,
   because no hook reports the approval.

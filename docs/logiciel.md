@@ -168,11 +168,14 @@ du début du tour et les attentes en cours.
 
 | Outil | Début de tour | Fin de tour | Attente : début / fin |
 | --- | --- | --- | --- |
-| Claude Code | `UserPromptSubmit`, `SubagentStart` | `Stop`, `StopFailure`, `SubagentStop`, `SessionEnd`, `PostToolUseFailure` interrompu | `PermissionRequest`, `PreToolUse` (questions), `Elicitation` / `PostToolUse(Failure)`, `PermissionDenied`, `ElicitationResult` |
+| Claude Code | `UserPromptSubmit`, `SubagentStart` | `Stop`, `StopFailure`, `SubagentStop`, `SessionEnd`, `PostToolUseFailure` interrompu, `PostToolUse` de `SubagentHandback` | `PermissionRequest`, `PreToolUse` (questions), `Elicitation` / `PostToolUse(Failure)`, `PermissionDenied`, `ElicitationResult` |
 | Hermes | `pre_llm_call`, `subagent_start` | `on_session_end` (chaque fin de tour : réussi, échoué ou interrompu), `subagent_stop` | `on_human_input_request` / `on_human_input_resolved` |
 
 - Un sous-agent a sa propre entrée (`agent_id` chez Claude Code, `child_session_id` chez
   Hermes) : le `Stop` de la session principale ne l'éteint pas.
+- Un sous-agent `web-fetch` au premier plan n'émet pas `SubagentStop` (Claude Code 2.1.319) :
+  sa fin se lit sur l'outil `SubagentHandback`, par lequel il rend son rapport. Sans cela, il
+  resterait compté une heure, jusqu'à `STALE_AFTER`.
 - L'attente d'une permission se lève à la fin de **cet** outil (même nom), pas d'un autre
   lancé en parallèle. Limite : elle reste allumée pendant l'exécution de l'outil approuvé,
   car aucun hook ne signale l'approbation.
